@@ -15,12 +15,14 @@ extern const int TETROMINOS[112];
 
 struct s_etat{
 	int* g;		// Grille de jeu, contient uniquement les blocs fixes
-	int id_tetro;	// Indice du tetromino courant
+	int idTetro;	// Indice du tetromino courant
 	int x;		// Abscisse du tetromino courant, vers la droite
 	int y;		// Ordonnée du tetromino courant, VERS LE BAS
 	int rota;	// Nombre de rotations effectuées par le tetromino courant
 	int suivants[14];	// Indices des tetrominos à venir, assez grand pour 2 sacs
-	bool fermeture;		// Si vrai, la fermeture (propre) du jeu est immédiate
+	int reserve; 	// Indice du tétromino actuellement en réserve (VIDE s'il n'y en a pas)
+	bool reserveDispo;	// Si vrai, le tétromino courant ne provient pas de la réserve, et il est autorisé de l'y envoyer
+	bool fermeture;		// Si vrai, la fermeture (propre) du jeu interviendra sous peu
 };
 typedef s_etat etat;
 
@@ -33,5 +35,6 @@ void prochainSac(etat* e);
 void tetrominoSuivant(etat* e);
 void initEtat(etat* e);
 void detruireEtat(etat* e);
+void reserve(etat* e);
 
 #endif

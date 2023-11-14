@@ -97,7 +97,6 @@ void permute(int* t,int i,int j){
  * Ne sera pas vraiment adapté à un mode 2 joueurs (si on veut que les 2 joueurs aient la même suite de tétrominos) */
 void prochainSac(etat* e){
 	// Trouve à partir de quel indice i_vide le tableau des tétrominos suivants est vide
-	// Si i_vide >= 8 (en pratique si i_vide == 8), il n'y a pas la place pour un nouveau sac
 	int i_vide = 8;
 	for(int i = 0;i <= 7;i++){
 		if(e->suivants[i] == VIDE){
@@ -105,8 +104,9 @@ void prochainSac(etat* e){
 			break;
 		}
 	}
-	if(i_vide < 8){ 		// Sinon, il n'y a pas la place pour un nouveau sac
-		// Algorithme de Fisher-Yates (cf Wikipedia) pour une permutation aléatoire :
+	// Si i_vide >= 8 (en pratique si i_vide == 8), il n'y a pas la place pour un nouveau sac
+	if(i_vide < 8){
+		// Algorithme de Fisher-Yates (cf Wikipedia) pour une permutation aléatoire "effcicace" :
 		int t[7];
 		for(int i = 0;i <= 6;i++){
 			t[i] = i+1;		// Car les indices des tétominos vont de 1 à 7
@@ -127,7 +127,7 @@ void prochainSac(etat* e){
 /* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
  * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
 void tetrominoSuivant(etat* e){
-	e -> id_tetro = e -> suivants[0];
+	e -> idTetro = e -> suivants[0];
 	int i = 0;
 	while(i < 13 && e -> suivants[i] != VIDE){
 		e -> suivants[i] = e -> suivants[i+1];
@@ -136,19 +136,21 @@ void tetrominoSuivant(etat* e){
 	e -> x = 3;
 	e -> y = 0;
 	e -> suivants[13] = VIDE;
+	e -> reserveDispo = true;
 	prochainSac(e);
 	return;
 }
 
 void initEtat(etat* e){
-	e->id_tetro = VIDE;
+	e -> idTetro = VIDE;
+	e -> reserve = VIDE;
 	for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;
 	e -> g = new int[HAUT*LARG];
 	for(int i = 0;i < HAUT*LARG;i++){
 		e->g[i] = 0;
 	}
-	e->fermeture = false;
-	// Génère les 14 premiers tétrominos
+	e -> fermeture = false;
+	// Génère les 14 premiers tétrominos :
 	prochainSac(e);
 	prochainSac(e);
 	tetrominoSuivant(e);
@@ -160,3 +162,17 @@ void detruireEtat(etat* e){
 	return;
 }
 
+void reserve(etat* e){
+	if(e -> reserveDispo){
+		if(e -> reserve == VIDE){	// Cas particulier de la première utilisation de la réserve
+			e -> reserve = e -> idTetro;
+			tetrominoSuivant(e);
+		}else{
+			int tmp = e -> reserve;
+			e -> reserve = e -> idTetro;
+			e -> idTetro = tmp;
+		}
+		e -> reserveDispo = false;
+	}
+	return;
+}

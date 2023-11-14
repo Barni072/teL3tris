@@ -25,7 +25,7 @@ void attendClavierVrac(){
 }	// N'est plus utilisé à ce stade
 
 /* TEMPORAIRE AUSSI, pourra et devra être amélioré, principalement avec l'ajout de DAS pour les translations, et potentiellement des commandes non hardcodées...
- * Devra être appelé à chaque "tick", vérifie les commandes et déclenche les actions associées */
+ * Devra être appelé à chaque "tick" ; vérifie les commandes et déclenche les actions associées */
 void appliqueCommandes(etat* e){
 	if(SDL_PollEvent(&evnt)){
 		switch(evnt.type){
@@ -60,7 +60,7 @@ void appliqueCommandes(etat* e){
 							// Rotation indirecte
 							break;
 						case(SDLK_c):	// C
-							// Réserve
+							reserve(e);
 							break;
 						//case(SDLK		// Aucune idée de la façon dont sélectionner la touche espace...
 							// Pause ?

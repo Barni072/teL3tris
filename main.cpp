@@ -7,7 +7,7 @@
 
 void initialisation(etat* e){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
-	fenetre = SDL_CreateWindow("Tetris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,300,520,SDL_WINDOW_SHOWN);
+	fenetre = SDL_CreateWindow("Tetris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,550,550,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	srand(time(NULL));
 	initEtat(e);

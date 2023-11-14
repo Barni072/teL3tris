@@ -1,7 +1,7 @@
  #include <SDL2/SDL.h>
  #include "grille.h"
  
- // Variables pour SDL
+// Variables pour SDL
 SDL_Window* fenetre;
 SDL_Renderer* rndr;
  
@@ -11,7 +11,7 @@ const int TLBC = 25;
  /* Affiche une grille avec quadrillage, destinée à être remplie par des blocs
  * La grille est blanche, le quadrillage est gris
  * x et y sont les coordonnées du pixel en haut à gauche de la grille
- * La largeur et la hauteur sont exprimées en nombre de blocs */
+ * La largeur et la hauteur sont exprimées EN NOMBRE DE BLOCS */
 void dessineGrille(int x,int y,int largeur,int hauteur){
 	SDL_Rect rect;
 	rect.x = x;
@@ -56,17 +56,41 @@ void couleurBloc(int clr){
 		case 7:		// L, orange
 			SDL_SetRenderDrawColor(rndr,250,70,25,255);
 			break;
+		case 8:		// Gris, sert pour la réserve lorsqu'elle n'est pas utilisable, et éventuellement pour les blocs de "garbage" en 1v1
+			SDL_SetRenderDrawColor(rndr,64,64,64,255);
+			break;
 		default:	// Erreur, on affiche du blanc pour que ce soit visible...
 			SDL_SetRenderDrawColor(rndr,255,255,255,255);
 			break;
 		}
 }
 
-/* Affiche la grille principale et tous ses blocs (ceux fixes et ceux appartenant au tétromino courant)
- * x et y sont les coordonnées du pixel en haut à gauche de la grille */
-void grillePrincipale(etat* e){
-	int offset_x = 5;	// Choisi en vrac arbitrairement
-	int offset_y = 5;	// Idem
+/* Dessine "en vrac" le tétromino d'indice idTetro, à offset_x+1 pixels du bord gauche de la fenêtre,
+ * et offset_y+1 pixels du bord haut de la fenêtre, sans mettre tout seul de grille autour
+ * (Les "+1" servent à ne pas chevaucher le quadrillage) 
+ * Le booléen "gris" force l'affichage du tétromino en gris */
+void afficheTetro(int idTetro,int offset_x,int offset_y,bool gris){
+	for(int i = 0;i < 4;i++){
+		for(int j = 0;j < 4;j++){
+			int clr = blocT(tetro(idTetro),i,j);
+			if(clr != VIDE){
+				if(gris) clr = 8;	// Hack fumeux pour griser la réserve lorsqu'elle n'est pas utilisable
+				SDL_Rect rect;
+				rect.x = offset_x+1 + i*TLBC;
+				rect.y = offset_y+1 + j*TLBC;
+				rect.w = TLBC-1;
+				rect.h = TLBC-1;
+				couleurBloc(clr);
+				SDL_RenderFillRect(rndr,&rect);
+			}
+		}
+	}
+	return;
+}
+
+/* Dessine la grille principale et tous ses blocs (ceux fixes et ceux appartenant au tétromino courant)
+ * offset_x et offset_y représentent le décalage entre le bord de la grille et celui de la fenêtre, en pixels */
+void afficheGrillePrincipale(etat* e,int offset_x,int offset_y){
 	dessineGrille(offset_x,offset_y,LARG,HAUT);
 	// Affichage des blocs fixes :
 	for(int i = 0;i < LARG;i++){
@@ -85,9 +109,9 @@ void grillePrincipale(etat* e){
 		}
 	}
 	// Affichage des blocs du tétromino courant :
-	for(int i = 0;i < 4;i++){
+	/*for(int i = 0;i < 4;i++){		// Implémentation antérieure à la fonction afficheTetro (basiquement c'est pareil)
 		for(int j = 0;j < 4;j++){
-			int clr = blocT(tetro(e->id_tetro),i,j);
+			int clr = blocT(tetro(e->idTetro),i,j);
 			if(clr != VIDE){
 				SDL_Rect rect;
 				rect.x = offset_x + ((e->x)+i)*TLBC+1;
@@ -98,6 +122,29 @@ void grillePrincipale(etat* e){
 				SDL_RenderFillRect(rndr,&rect);
 			}
 		}
+	}*/
+	afficheTetro(e->idTetro,offset_x + (e->x)*TLBC,offset_y + (e->y)*TLBC,false);
+	return;
+}
+
+/* Dessine le tétromino stocké en réserve, s'il existe, dans une grille (avec les offsets, comme d'habitude) */
+void afficheReserve(etat* e,int offset_x,int offset_y){
+	dessineGrille(offset_x,offset_y,4,4);
+	if(e->reserve != VIDE){
+		afficheTetro(e->reserve,offset_x,offset_y,!(e->reserveDispo));
+	}
+	return;
+}
+/* Dessine une grille contenant les nb premiers tétrominos suivants (avec les offsets habituels)
+ * Peut en théorie afficher 7 tétrominos, en pratique ça prendrait trop de place */
+void afficheSuivants(etat* e,int nb,int offset_x,int offset_y){
+	dessineGrille(offset_x,offset_y,4,nb*4);
+	for(int k = 1;k < nb;k++){	// Affichage d'une "ligne plus blanche" entre les emplacements des différents tétrominos
+		SDL_SetRenderDrawColor(rndr,255,255,255,255);
+		SDL_RenderDrawLine(rndr,offset_x,offset_y + 4*k*TLBC,offset_x + 4*TLBC,offset_y + 4*k*TLBC);
+	}
+	for(int k = 0;k < nb;k++){
+		afficheTetro(e->suivants[k],offset_x,offset_y + 4*k*TLBC,false);
 	}
 	return;
 }
@@ -141,7 +188,9 @@ void afficheTemp(etat* e){
 	e->g[170] = 2;
 	e->g[180] = 2;
 	e->g[190] = 2;
-	grillePrincipale(e);
+	afficheGrillePrincipale(e,5,5);
+	afficheReserve(e,280,5);
+	afficheSuivants(e,3,280,130);
 	SDL_RenderPresent(rndr);		// MARCHE SEULEMENT SOUS WAYLAND !!
 	return;
 }
