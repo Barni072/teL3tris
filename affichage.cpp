@@ -56,7 +56,7 @@ void couleurBloc(int clr){
 		case 7:		// L, orange
 			SDL_SetRenderDrawColor(rndr,250,70,25,255);
 			break;
-		case 8:		// Gris, sert pour la réserve lorsqu'elle n'est pas utilisable, et éventuellement pour les blocs de "garbage" en 1v1
+		case 8:		// GRIS, sert pour la réserve lorsqu'elle n'est pas utilisable, et éventuellement pour les blocs de "garbage" en 1v1
 			SDL_SetRenderDrawColor(rndr,64,64,64,255);
 			break;
 		default:	// Erreur, on affiche du blanc pour que ce soit visible...
@@ -74,7 +74,7 @@ void afficheTetro(int idTetro,int offset_x,int offset_y,bool gris){
 		for(int j = 0;j < 4;j++){
 			int clr = blocT(tetro(idTetro),i,j);
 			if(clr != VIDE){
-				if(gris) clr = 8;	// Hack fumeux pour griser la réserve lorsqu'elle n'est pas utilisable
+				if(gris) clr = GRIS;	// Hack fumeux pour griser la réserve lorsqu'elle n'est pas utilisable
 				SDL_Rect rect;
 				rect.x = offset_x+1 + i*TLBC;
 				rect.y = offset_y+1 + j*TLBC;

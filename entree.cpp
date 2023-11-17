@@ -37,21 +37,26 @@ void appliqueCommandes(etat* e){
 				// Touche enfoncée
 				case(SDL_KEYDOWN):
 					switch(evnt.key.keysym.sym){
-						case(SDLK_r):	// R
+						/*case(SDLK_r):	// R
 							// DEBUG, force le tétromino suivant, il faudra enlever ça à terme
 							tetrominoSuivant(e);
-							break;
+							break;*/
 						case(SDLK_q):	// Q
 							// Translation gauche
+							translation(e,3);
 							break;
 						case(SDLK_d):	// D
 							// Translation droite
+							translation(e,1);
 							break;
 						case(SDLK_s):	// S
 							// Descente rapide
+							// POUR L'INSTANT, TRANSLATION VERS LE BAS
+							translation(e,2);
 							break;
 						case(SDLK_z):	// Z
 							// Descente immédiate
+							descenteImmediate(e);
 							break;
 						case(SDLK_a):	// A
 							// Rotation directe

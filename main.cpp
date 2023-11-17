@@ -26,11 +26,18 @@ void fermeture(etat* e){
 int main(){
 	etat e;		// Pour l'instant pas une variable globale, plusieurs états pourraient coexister selon ce qu'on décide par la suite...
 	initialisation(&e);
+	int compteTicks = 0;
 	while(!(e.fermeture)){
+		if(compteTicks == e.delaiDescente){
+			descenteAuto(&e);
+			compteTicks = 0;
+		}
 		afficheTemp(&e);
 		appliqueCommandes(&e);
+		compteTicks += 1;
+		
+		
 	}
-	//attendClavierVrac();
 	fermeture(&e);
 	return 0;
 } 

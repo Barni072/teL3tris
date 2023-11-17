@@ -13,6 +13,7 @@ const int S = 4;
 const int J = 5;
 const int Z = 6;
 const int L = 7;
+const int GRIS = 8;
 const int VIDE = 0;		// Signifie : "Il n'y a rien ici"
 // id == 1 : 1 position de rotation
 // id % 2 == 0 : 2 positions de rotation
@@ -80,6 +81,11 @@ int blocG(etat* e,int i,int j){
 int blocT(const int* t,int i,int j){
 	//return blocQ(t,i,j,4);	// Ne fonctionne pas, car blocQ refuse que t soit constant
 	return t[i+j*4];
+}
+
+void ecritBlocG(etat* e,int i,int j,int clr){
+	e->g[i+j*LARG] = clr;
+	return;
 }
 
 /* Fonction auxiliaire pour la fonction suivante
@@ -150,6 +156,8 @@ void initEtat(etat* e){
 		e->g[i] = 0;
 	}
 	e -> fermeture = false;
+	e -> delaiDescente = 10;	// FOIREUX
+	e -> descenteRapide = false;
 	// Génère les 14 premiers tétrominos :
 	prochainSac(e);
 	prochainSac(e);
@@ -176,3 +184,85 @@ void reserve(etat* e){
 	}
 	return;
 }
+
+bool collision(etat* e,int dx,int dy,int drot){
+	int x = e->x + dx;
+	int y = e->y + dy;
+	for(int i = 0;i < 4;i++){
+		for(int j = 0;j < 4;j++){
+			if(x+i < 0 || x+i >= LARG){	// Cas où x+i est hors de la grille
+				if(blocT(tetro(e->idTetro),i,j) != VIDE) return false;
+			}else if(y+j < 0 || y+j >= HAUT){	// Cas où y+j est hors de la grille
+				if(blocT(tetro(e->idTetro),i,j) != VIDE) return false;
+			}else{		// Cas général, dans la grille
+				if(blocT(tetro(e->idTetro),i,j) != VIDE && blocG(e,e->x + dx + i,e->y + dy + j) != VIDE){
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+/* Translate le tétromino courant, si c'est possible */
+bool translation(etat* e,int dir){
+	switch(dir){
+		case 0:		// HAUT
+			if(collision(e,0,-1,0)){
+				e->y -= 1;
+				return true;
+			}
+			break;
+		case 1:		// DROITE
+			if(collision(e,1,0,0)){
+				e->x += 1;
+				return true;
+			}
+			break;
+		case 2:		// BAS
+			if(collision(e,0,1,0)){
+				e->y += 1;
+				return true;
+			}
+			break;
+		case 3:		// GAUCHE
+			if(collision(e,-1,0,0)){
+				e->x -= 1;
+				return true;
+			}
+			break;
+		default:	// Direction invalide
+			// Afficher un message d'erreur ?
+			break;
+	}
+	return false;
+}
+
+/* Place les blocs du tétromino courant dans e->g, et appelle le tétromino suivant */
+void fixeTetromino(etat* e){
+	for(int i = 0;i < 4;i++){
+		for(int j = 0;j < 4;j++){
+			int clr = blocT(tetro(e->idTetro),i,j);
+			if(clr != VIDE) ecritBlocG(e,e->x + i,e->y + j,clr);
+		}
+	}
+	tetrominoSuivant(e);
+	return;
+}
+
+/* Descente automatique du tetromino courant
+ * Ne gère pas le timing, donc doit être appelée "au bon moment" */
+void descenteAuto(etat* e){
+	if(!translation(e,2)){
+		fixeTetromino(e);
+	}
+	return;
+}
+
+/* Descend le tétromino courant autant que possible immédiatement, et passe au suivant */
+void descenteImmediate(etat* e){
+	while(translation(e,2));
+	fixeTetromino(e);
+	return;
+}
+	
