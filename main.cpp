@@ -32,11 +32,9 @@ int main(){
 			descenteAuto(&e);
 			compteTicks = 0;
 		}
-		afficheTemp(&e);
 		appliqueCommandes(&e);
+		if(e.affiche) afficheTemp(&e);		// Ne recharge l'affichage que si c'est nécessaire
 		compteTicks += 1;
-		
-		
 	}
 	fermeture(&e);
 	return 0;

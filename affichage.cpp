@@ -151,6 +151,7 @@ void afficheSuivants(etat* e,int nb,int offset_x,int offset_y){
 
 /* TEMPORAIRE ! Affiche un peu en vrac un exemple de ce qui est déjà implémenté */
 void afficheTemp(etat* e){
+	e -> affiche = false;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
 	SDL_RenderClear(rndr);
 	// T

@@ -24,6 +24,7 @@ struct s_etat{
 	int reserve; 	// Indice du tétromino actuellement en réserve (VIDE s'il n'y en a pas)
 	bool reserveDispo;		// Si vrai, le tétromino courant ne provient pas de la réserve, et il est autorisé de l'y envoyer
 	bool fermeture;		// Si vrai, la fermeture (propre) du jeu interviendra sous peu
+	bool affiche;		// Doit être passé à vrai après tout changement destiné à être affiché, permet de ne pas rafraîchir l'affichage à chaque tick
 	int delaiDescente;		// Délai actuel de la descente automatique, en milisecondes
 	bool descenteRapide;
 };

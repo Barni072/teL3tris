@@ -143,6 +143,7 @@ void tetrominoSuivant(etat* e){
 	e -> y = 0;
 	e -> suivants[13] = VIDE;
 	e -> reserveDispo = true;
+	e -> affiche = true;
 	prochainSac(e);
 	return;
 }
@@ -181,6 +182,7 @@ void reserve(etat* e){
 			e -> idTetro = tmp;
 		}
 		e -> reserveDispo = false;
+		e -> affiche = true;
 	}
 	return;
 }
@@ -210,24 +212,28 @@ bool translation(etat* e,int dir){
 		case 0:		// HAUT
 			if(collision(e,0,-1,0)){
 				e->y -= 1;
+				e -> affiche = true;
 				return true;
 			}
 			break;
 		case 1:		// DROITE
 			if(collision(e,1,0,0)){
 				e->x += 1;
+				e -> affiche = true;
 				return true;
 			}
 			break;
 		case 2:		// BAS
 			if(collision(e,0,1,0)){
 				e->y += 1;
+				e -> affiche = true;
 				return true;
 			}
 			break;
 		case 3:		// GAUCHE
 			if(collision(e,-1,0,0)){
 				e->x -= 1;
+				e -> affiche = true;
 				return true;
 			}
 			break;
