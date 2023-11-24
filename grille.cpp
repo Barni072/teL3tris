@@ -130,6 +130,14 @@ void prochainSac(etat* e){
 	return;
 }
 
+/* Place le prochain tétromino à son "point de départ" sur la grille de jeu
+ * Permettra éventuellement d'affiner un peu les points de départ des différents tétrominos */
+void placeTetromino(etat* e){
+	e -> x = 3;
+	e -> y = 0;
+	return;
+}
+
 /* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
  * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
 void tetrominoSuivant(etat* e){
@@ -139,11 +147,11 @@ void tetrominoSuivant(etat* e){
 		e -> suivants[i] = e -> suivants[i+1];
 		i += 1;
 	}
-	e -> x = 3;
-	e -> y = 0;
+	placeTetromino(e);
 	e -> suivants[13] = VIDE;
 	e -> reserveDispo = true;
 	e -> affiche = true;
+	e -> iDescente = 0;
 	prochainSac(e);
 	return;
 }
@@ -157,7 +165,7 @@ void initEtat(etat* e){
 		e->g[i] = 0;
 	}
 	e -> fermeture = false;
-	e -> delaiDescente = 10;	// FOIREUX
+	e -> delaiDescente = 500;	// TEMPORAIRE, correspondra au niveau 1 (?)
 	e -> descenteRapide = false;
 	// Génère les 14 premiers tétrominos :
 	prochainSac(e);
@@ -180,6 +188,8 @@ void reserve(etat* e){
 			int tmp = e -> reserve;
 			e -> reserve = e -> idTetro;
 			e -> idTetro = tmp;
+			placeTetromino(e);
+			e -> iDescente = 0;
 		}
 		e -> reserveDispo = false;
 		e -> affiche = true;
@@ -271,4 +281,3 @@ void descenteImmediate(etat* e){
 	fixeTetromino(e);
 	return;
 }
-	

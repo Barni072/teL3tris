@@ -26,15 +26,17 @@ void fermeture(etat* e){
 int main(){
 	etat e;		// Pour l'instant pas une variable globale, plusieurs états pourraient coexister selon ce qu'on décide par la suite...
 	initialisation(&e);
-	int compteTicks = 0;
+	int ticks = SDL_GetTicks();
 	while(!(e.fermeture)){
-		if(compteTicks == e.delaiDescente){
+		if(e.iDescente >= e.delaiDescente){		// ">=" nécessaire pour ne pas rester bloqué lorsque e.delaiDescente change...
 			descenteAuto(&e);
-			compteTicks = 0;
+			e.iDescente = 0;
 		}
 		appliqueCommandes(&e);
 		if(e.affiche) afficheTemp(&e);		// Ne recharge l'affichage que si c'est nécessaire
-		compteTicks += 1;
+		e.iDescente += 1;
+		while(SDL_GetTicks() < ticks + 2){ /* Attente active, 2ms (500Hz) */ }
+		ticks = SDL_GetTicks();		
 	}
 	fermeture(&e);
 	return 0;

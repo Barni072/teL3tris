@@ -26,7 +26,9 @@ struct s_etat{
 	bool fermeture;		// Si vrai, la fermeture (propre) du jeu interviendra sous peu
 	bool affiche;		// Doit être passé à vrai après tout changement destiné à être affiché, permet de ne pas rafraîchir l'affichage à chaque tick
 	int delaiDescente;		// Délai actuel de la descente automatique, en milisecondes
+	int iDescente;		// Compteur d'itérations de la boucle principale, la tétromino courant descent automatiquement quand ceci atteint delaiDescente
 	bool descenteRapide;
+	int lignes;
 };
 typedef s_etat etat;
 
@@ -37,6 +39,7 @@ int blocT(const int* t,int i,int j);
 void ecritBlocG(etat* e,int i,int j,int clr);
 //void permute(int* t,int i,int j);
 void prochainSac(etat* e);
+// void placeTetromino(etat* e);
 void tetrominoSuivant(etat* e);
 void initEtat(etat* e);
 void detruireEtat(etat* e);
