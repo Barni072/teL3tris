@@ -1,86 +1,17 @@
 #include <cstdlib>
 #include "grille.h"
+#include "tetrominos.h"
+
+#include <iostream>
+using namespace std;		// TESTS
 
 // Taille de la grille de jeu, en blocs
 const int LARG = 10;
 const int HAUT = 20;
 
-// Identifiants des différents tétrominos, et des couleurs de leurs blocs
-const int O = 1;
-const int I = 2;
-const int T = 3;
-const int S = 4;
-const int J = 5;
-const int Z = 6;
-const int L = 7;
-const int GRIS = 8;
-const int VIDE = 0;		// Signifie : "Il n'y a rien ici"
-// id == 1 : 1 position de rotation
-// id % 2 == 0 : 2 positions de rotation
-// Sinon : 4 positions de rotation
-
-// Tous sauf O et I : rotation matricielle en gardant seulement les 3 1ers indices !
-
-/* Contient les positions de départ des tétrominos
- * À ne surtout pas utiliser directement */
-const int TETROMINOS[112] = {
-	0,0,0,0,
-	0,O,O,0,
-	0,O,O,0,
-	0,0,0,0,
-	
-	0,0,0,0,
-	0,0,0,0,
-	I,I,I,I,
-	0,0,0,0,
-	
-	0,T,0,0,
-	T,T,T,0,
-	0,0,0,0,
-	0,0,0,0,
-	
-	0,0,0,0,
-	0,S,S,0,
-	S,S,0,0,
-	0,0,0,0,
-	
-	0,0,0,0,
-	J,J,J,0,
-	0,0,J,0,
-	0,0,0,0,
-	
-	0,0,0,0,
-	Z,Z,0,0,
-	0,Z,Z,0,
-	0,0,0,0,
-	
-	0,0,0,0,
-	L,L,L,0,
-	L,0,0,0,
-	0,0,0,0
-};		// NE VRAIMENT PAS UTILISER ÇA DIRECTEMENT	
-// Plutôt utiliser cette fonction :
-/* Renvoie un tableau (constant !) à 16 cases correspondant au tetromino d'indice id
- * C'est en fait un pointeur vers un bout du tableau ci-dessus, mais ça revient au même */
-const int* tetro(int id){
-	return &TETROMINOS[16*(id-1)];
-}
-
-/* Renvoie la couleur du bloc de coordonnées (i,j) de la grille g quelconque, qui doit être de largeur w */
-int blocQ(int* g,int i,int j,int w){
-	return g[i+j*w];
-}		// En fait, ne sert pas...
-
 /* Renvoie la couleur du bloc de coordonnées (i,j) de la grille de jeu (de largeur LARG) contenue dans e */
 int blocG(etat* e,int i,int j){
-	//return blocQ(e->g,i,j,LARG);
 	return e->g[i+j*LARG];
-}
-
-/* Renvoie la couleur du bloc de coordonnées (i,j) de la grille t, correspondant à un tétromino (donc de largeur 4) */
-int blocT(const int* t,int i,int j){
-	//return blocQ(t,i,j,4);	// Ne fonctionne pas, car blocQ refuse que t soit constant
-	return t[i+j*4];
 }
 
 void ecritBlocG(etat* e,int i,int j,int clr){
@@ -135,6 +66,7 @@ void prochainSac(etat* e){
 void placeTetromino(etat* e){
 	e -> x = 3;
 	e -> y = 0;
+	e -> rota = 0;
 	return;
 }
 
@@ -167,6 +99,7 @@ void initEtat(etat* e){
 	e -> fermeture = false;
 	e -> delaiDescente = 500;	// TEMPORAIRE, correspondra au niveau 1 (?)
 	e -> descenteRapide = false;
+	e -> lignes = 0;
 	// Génère les 14 premiers tétrominos :
 	prochainSac(e);
 	prochainSac(e);
@@ -179,7 +112,7 @@ void detruireEtat(etat* e){
 	return;
 }
 
-void reserve(etat* e){
+void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 	if(e -> reserveDispo){
 		if(e -> reserve == VIDE){	// Cas particulier de la première utilisation de la réserve
 			e -> reserve = e -> idTetro;
@@ -203,11 +136,11 @@ bool collision(etat* e,int dx,int dy,int drot){
 	for(int i = 0;i < 4;i++){
 		for(int j = 0;j < 4;j++){
 			if(x+i < 0 || x+i >= LARG){	// Cas où x+i est hors de la grille
-				if(blocT(tetro(e->idTetro),i,j) != VIDE) return false;
+				if(blocT(tetro(e->idTetro,e->rota),i,j) != VIDE) return false;
 			}else if(y+j < 0 || y+j >= HAUT){	// Cas où y+j est hors de la grille
-				if(blocT(tetro(e->idTetro),i,j) != VIDE) return false;
+				if(blocT(tetro(e->idTetro,e->rota),i,j) != VIDE) return false;
 			}else{		// Cas général, dans la grille
-				if(blocT(tetro(e->idTetro),i,j) != VIDE && blocG(e,e->x + dx + i,e->y + dy + j) != VIDE){
+				if(blocT(tetro(e->idTetro,e->rota),i,j) != VIDE && blocG(e,e->x + dx + i,e->y + dy + j) != VIDE){
 					return false;
 				}
 			}
@@ -254,14 +187,50 @@ bool translation(etat* e,int dir){
 	return false;
 }
 
+/* Vérifie si des lignes complétées existent dans la grille
+ * Si oui, les enlève, incrémente le compteur de lignes, et n'incrémente pas encore le score...
+ * GROS PROBLÈMES QUAND 2 LIGNES D'AFFILÉE SONT COMPLÉTÉES */
+void enleveLignes(etat* e){
+	int nbLignes = 0;
+	bool plein;
+	for(int j = HAUT-1;j >= 0;j--){
+		plein = true;
+		// On vérifie si la j-ième ligne est pleine :
+		for(int i = 0;i < LARG;i++){
+			if(blocG(e,i,j) == VIDE){
+				plein = false;
+				break;
+			}
+		}
+		if(plein){
+			nbLignes += 1;
+			// On fait descendre les lignes supérieures :
+			for(int k = j-1;k >= 0;k--){
+				for(int i = 0;i < LARG;i++){
+					ecritBlocG(e,i,k+1,blocG(e,i,k));
+				}
+			}
+			// On remet bien des blocs VIDEs sur la ligne la plus haute :
+			for(int i = 0;i < LARG;i++){
+				ecritBlocG(e,i,0,VIDE);
+			}
+			j += 1;		// Permet de détecter le cas où 2 lignes "d'affilée" sont complétées (sinon, on saute la 2ème...)
+		}
+	}
+	e -> lignes += nbLignes;	// Le compteur de lignes n'a pas encore été testé...
+	// + Il faudra incrémenter le score ici
+	return;
+}
+
 /* Place les blocs du tétromino courant dans e->g, et appelle le tétromino suivant */
 void fixeTetromino(etat* e){
 	for(int i = 0;i < 4;i++){
 		for(int j = 0;j < 4;j++){
-			int clr = blocT(tetro(e->idTetro),i,j);
+			int clr = blocT(tetro(e->idTetro,e->rota),i,j);
 			if(clr != VIDE) ecritBlocG(e,e->x + i,e->y + j,clr);
 		}
 	}
+	enleveLignes(e);
 	tetrominoSuivant(e);
 	return;
 }
@@ -279,5 +248,19 @@ void descenteAuto(etat* e){
 void descenteImmediate(etat* e){
 	while(translation(e,2));
 	fixeTetromino(e);
+	return;
+}
+
+/* Modifie l'état e pour que le tétromino courant soit considéré comme ayant tourné, si c'est possible (sinon, ne fait rien)
+ * Le booléen sens est vrai SSI la rotation demandée est dans le sens horaire
+ * ON IMPLÉMENTERA LES WALL KICKS ICI */
+void rotation(etat* e,bool sens){
+	// Il faudra vérifier les collisions
+	// Pour l'instant, c'est la fête à la saucisse la plus générale
+	if(sens) e -> rota = (e->rota + 1) % 4;
+	else e -> rota = (e->rota -1) % 4;
+	e -> affiche = true;
+	cout << e->rota << endl;	// TESTS
+	// Il semble y avoir un gros problème avec le "%4", on arrive a avoir des valeurs de e->rota négatives...
 	return;
 }

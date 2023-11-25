@@ -60,9 +60,11 @@ void appliqueCommandes(etat* e){
 							break;
 						case(SDLK_a):	// A
 							// Rotation directe
+							rotation(e,false);
 							break;
 						case(SDLK_e):	// E
 							// Rotation indirecte
+							rotation(e,true);
 							break;
 						case(SDLK_c):	// C
 							reserve(e);

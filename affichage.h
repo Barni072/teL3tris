@@ -8,7 +8,7 @@ extern const int TLBC;
 
 //void dessineGrille(int x,int y,int largeur,int hauteur);
 //int couleurBloc(int clr);
-//void afficheTetro(int idTetro,int offset_x,int offset_y,bool gris);
+//void afficheTetro(int idTetro,int offset_x,int offset_y,int rota,bool gris);
 //void afficheGrillePrincipale(etat* e,int offset_x,int offset_y);
 //void afficheReserve(etat* e,int offset_x,int offset_y);
 //void afficheSuivants(etat* e,int nb,int offset_x,int offset_y);

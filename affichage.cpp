@@ -1,5 +1,6 @@
  #include <SDL2/SDL.h>
  #include "grille.h"
+ #include "tetrominos.h"
  
 // Variables pour SDL
 SDL_Window* fenetre;
@@ -67,12 +68,13 @@ void couleurBloc(int clr){
 
 /* Dessine "en vrac" le tétromino d'indice idTetro, à offset_x+1 pixels du bord gauche de la fenêtre,
  * et offset_y+1 pixels du bord haut de la fenêtre, sans mettre tout seul de grille autour
+ * rota correspond au nombre de rotations effectuées par le tétromino
  * (Les "+1" servent à ne pas chevaucher le quadrillage) 
  * Le booléen "gris" force l'affichage du tétromino en gris */
-void afficheTetro(int idTetro,int offset_x,int offset_y,bool gris){
+void afficheTetro(int idTetro,int offset_x,int offset_y,int rota,bool gris){
 	for(int i = 0;i < 4;i++){
 		for(int j = 0;j < 4;j++){
-			int clr = blocT(tetro(idTetro),i,j);
+			int clr = blocT(tetro(idTetro,rota),i,j);
 			if(clr != VIDE){
 				if(gris) clr = GRIS;	// Hack fumeux pour griser la réserve lorsqu'elle n'est pas utilisable
 				SDL_Rect rect;
@@ -109,21 +111,7 @@ void afficheGrillePrincipale(etat* e,int offset_x,int offset_y){
 		}
 	}
 	// Affichage des blocs du tétromino courant :
-	/*for(int i = 0;i < 4;i++){		// Implémentation antérieure à la fonction afficheTetro (basiquement c'est pareil)
-		for(int j = 0;j < 4;j++){
-			int clr = blocT(tetro(e->idTetro),i,j);
-			if(clr != VIDE){
-				SDL_Rect rect;
-				rect.x = offset_x + ((e->x)+i)*TLBC+1;
-				rect.y = offset_y + ((e->y)+j)*TLBC+1;
-				rect.w = TLBC-1;
-				rect.h = TLBC-1;
-				couleurBloc(clr);
-				SDL_RenderFillRect(rndr,&rect);
-			}
-		}
-	}*/
-	afficheTetro(e->idTetro,offset_x + (e->x)*TLBC,offset_y + (e->y)*TLBC,false);
+	afficheTetro(e->idTetro,offset_x + (e->x)*TLBC,offset_y + (e->y)*TLBC,e->rota,false);
 	return;
 }
 
@@ -131,7 +119,7 @@ void afficheGrillePrincipale(etat* e,int offset_x,int offset_y){
 void afficheReserve(etat* e,int offset_x,int offset_y){
 	dessineGrille(offset_x,offset_y,4,4);
 	if(e->reserve != VIDE){
-		afficheTetro(e->reserve,offset_x,offset_y,!(e->reserveDispo));
+		afficheTetro(e->reserve,offset_x,offset_y,0,!(e->reserveDispo));
 	}
 	return;
 }
@@ -144,7 +132,7 @@ void afficheSuivants(etat* e,int nb,int offset_x,int offset_y){
 		SDL_RenderDrawLine(rndr,offset_x,offset_y + 4*k*TLBC,offset_x + 4*TLBC,offset_y + 4*k*TLBC);
 	}
 	for(int k = 0;k < nb;k++){
-		afficheTetro(e->suivants[k],offset_x,offset_y + 4*k*TLBC,false);
+		afficheTetro(e->suivants[k],offset_x,offset_y + 4*k*TLBC,0,false);
 	}
 	return;
 }

@@ -3,16 +3,6 @@
 
 extern const int LARG;
 extern const int HAUT;
-extern const int I;
-extern const int O;
-extern const int T;
-extern const int L;
-extern const int J;
-extern const int Z;
-extern const int S;
-extern const int GRIS;
-extern const int VIDE;
-extern const int TETROMINOS[112];
 
 struct s_etat{
 	int* g;		// Grille de jeu, contient uniquement les blocs fixes
@@ -32,13 +22,11 @@ struct s_etat{
 };
 typedef s_etat etat;
 
-const int* tetro(int id);
-int blocQ(int* g,int i,int j,int w);
 int blocG(etat* e,int i,int j);
-int blocT(const int* t,int i,int j);
 void ecritBlocG(etat* e,int i,int j,int clr);
 //void permute(int* t,int i,int j);
 void prochainSac(etat* e);
+//void enleveLignes(etat* e);
 // void placeTetromino(etat* e);
 void tetrominoSuivant(etat* e);
 void initEtat(etat* e);
@@ -49,5 +37,6 @@ bool translation(etat*e,int dir);
 void fixeTetromino(etat* e);
 void descenteAuto(etat* e);
 void descenteImmediate(etat* e);
+void rotation(etat* e,bool sens);
 
 #endif
