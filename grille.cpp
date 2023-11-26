@@ -2,9 +2,6 @@
 #include "grille.h"
 #include "tetrominos.h"
 
-#include <iostream>
-using namespace std;		// TESTS
-
 // Taille de la grille de jeu, en blocs
 const int LARG = 10;
 const int HAUT = 20;
@@ -257,10 +254,8 @@ void descenteImmediate(etat* e){
 void rotation(etat* e,bool sens){
 	// Il faudra vérifier les collisions
 	// Pour l'instant, c'est la fête à la saucisse la plus générale
-	if(sens) e -> rota = (e->rota + 1) % 4;
-	else e -> rota = (e->rota -1) % 4;
+	if(sens) e -> rota = (((e->rota + 1) % 4)+4)%4;	// Formule un peu suspecte mais requise, pour toujours avoir e->rota entre 0 et 3
+	else e -> rota = (((e->rota -1) % 4)+4)%4;		// Idem
 	e -> affiche = true;
-	cout << e->rota << endl;	// TESTS
-	// Il semble y avoir un gros problème avec le "%4", on arrive a avoir des valeurs de e->rota négatives...
 	return;
 }
