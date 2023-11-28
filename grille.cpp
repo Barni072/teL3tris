@@ -11,6 +11,7 @@ int blocG(etat* e,int i,int j){
 	return e->g[i+j*LARG];
 }
 
+/* Remplace la valeur du bloc de coordonnées (i,j) de la grille de jeu principale contenue dans e par clr */
 void ecritBlocG(etat* e,int i,int j,int clr){
 	e->g[i+j*LARG] = clr;
 	return;
@@ -40,7 +41,7 @@ void prochainSac(etat* e){
 	}
 	// Si i_vide >= 8 (en pratique si i_vide == 8), il n'y a pas la place pour un nouveau sac
 	if(i_vide < 8){
-		// Algorithme de Fisher-Yates (cf Wikipedia) pour une permutation aléatoire "effcicace" :
+		// Mélange de Fisher-Yates (cf Wikipedia) pour une permutation aléatoire "effcicace" :
 		int t[7];
 		for(int i = 0;i <= 6;i++){
 			t[i] = i+1;		// Car les indices des tétominos vont de 1 à 7
@@ -58,18 +59,22 @@ void prochainSac(etat* e){
 	return;
 }
 
-/* Place le prochain tétromino à son "point de départ" sur la grille de jeu
- * Permettra éventuellement d'affiner un peu les points de départ des différents tétrominos */
+/* Place le prochain tétromino à son "point de départ" sur la grille de jeu et effectue les initialisations requises
+ * Permettra éventuellement d'affiner un peu les points de départ des différents tétrominos
+ * Pourrait servir à vérifier s'il y a une collision en posant le tétromino, et déclencher ainsi la fin de la partie... */
 void placeTetromino(etat* e){
 	e -> x = 3;
 	e -> y = 0;
 	e -> rota = 0;
+	e -> iDescente = 0;
+	e -> descenteRapide = false;	// Pour éviter les accidents stupides si la touche reste enfoncée
+	e -> affiche = true;
 	return;
 }
 
 /* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
  * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
-void tetrominoSuivant(etat* e){
+void tetrominoSuivant(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 	e -> idTetro = e -> suivants[0];
 	int i = 0;
 	while(i < 13 && e -> suivants[i] != VIDE){
@@ -79,13 +84,11 @@ void tetrominoSuivant(etat* e){
 	placeTetromino(e);
 	e -> suivants[13] = VIDE;
 	e -> reserveDispo = true;
-	e -> affiche = true;
-	e -> iDescente = 0;
-	e -> descenteRapide = false;	// Pour éviter les accidents stupides si la touche reste enfoncée
 	prochainSac(e);
 	return;
 }
 
+/* Initialisa proprement la structure d'état */
 void initEtat(etat* e){
 	e -> idTetro = VIDE;
 	e -> reserve = VIDE;
@@ -105,11 +108,13 @@ void initEtat(etat* e){
 	return;
 }
 
+/* Détruit proprement la structure d'état */
 void detruireEtat(etat* e){
 	delete[] e -> g;
 	return;
 }
 
+/* Envoie le tétromino courant dans la réserve (si possible), et le remplace par celui de la réserve (ou par le suivant lors de la 1ère utilisation de la réserve) */
 void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 	if(e -> reserveDispo){
 		if(e -> reserve == VIDE){	// Cas particulier de la première utilisation de la réserve
@@ -120,10 +125,8 @@ void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 			e -> reserve = e -> idTetro;
 			e -> idTetro = tmp;
 			placeTetromino(e);
-			e -> iDescente = 0;
 		}
 		e -> reserveDispo = false;
-		e -> affiche = true;
 	}
 	return;
 }
