@@ -17,8 +17,8 @@ struct s_etat{
 	bool affiche;		// Doit être passé à vrai après tout changement destiné à être affiché, permet de ne pas rafraîchir l'affichage à chaque tick
 	int delaiDescente;		// Délai actuel de la descente automatique, en milisecondes
 	int iDescente;		// Compteur d'itérations de la boucle principale, la tétromino courant descent automatiquement quand ceci atteint delaiDescente
-	bool descenteRapide;
-	int lignes;
+	bool descenteRapide;	// Vrai SSI le jeu est actuellement en mode descente rapide SSI la touche de descente rapide est actuellement enfoncée (mais désactivé automatiquement lorsque le tétromino courant change)
+	int lignes;		// Compteur de lignes
 };
 typedef s_etat etat;
 
@@ -37,6 +37,8 @@ bool translation(etat*e,int dir);
 void fixeTetromino(etat* e);
 void descenteAuto(etat* e);
 void descenteImmediate(etat* e);
+//void appliqueRotation(etat* e,int wkx,int wky,bool sens);
 void rotation(etat* e,bool sens);
+void descenteRapide(etat* e,bool rapide);
 
 #endif

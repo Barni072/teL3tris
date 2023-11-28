@@ -4,28 +4,7 @@
  
  SDL_Event evnt;
  
-/* TEMPORAIRE ! */
-void attendClavierVrac(){
-	bool boucle = true;
-	//SDL_Event evnt;
-	while(boucle){
-		if (SDL_PollEvent(&evnt)){
-			switch(evnt.type){
-				case(SDL_QUIT):
-				case(SDL_WINDOWEVENT_CLOSE):
-					boucle = false;
-					break;
-				case(SDL_KEYDOWN):
-					boucle = false;
-					break;
-			}
-		}
-	}
-	return;
-}	// N'est plus utilisé à ce stade
-
-/* TEMPORAIRE AUSSI, pourra et devra être amélioré, principalement avec l'ajout de DAS pour les translations, et potentiellement des commandes non hardcodées...
- * Devra être appelé à chaque "tick" ; vérifie les commandes et déclenche les actions associées */
+/* Devra être appelé à chaque "tick", vérifie les commandes et déclenche les actions associées */
 void appliqueCommandes(etat* e){
 	if(SDL_PollEvent(&evnt)){
 		switch(evnt.type){
@@ -51,8 +30,7 @@ void appliqueCommandes(etat* e){
 							break;
 						case(SDLK_s):	// S
 							// Descente rapide
-							// POUR L'INSTANT, TRANSLATION VERS LE BAS
-							translation(e,2);
+							descenteRapide(e,true);
 							break;
 						case(SDLK_z):	// Z
 							// Descente immédiate
@@ -76,8 +54,10 @@ void appliqueCommandes(etat* e){
 							break;
 					}		
 					break;
+			case(SDL_KEYUP):
+				if(evnt.key.keysym.sym == SDLK_s) descenteRapide(e,false);	// Fin de la descente rapide
 			}
 	}
 	return;
 }
-
+// TODO : Refaire cette fonction avec des commandes non hardcodées ?

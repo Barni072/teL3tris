@@ -11,10 +11,6 @@ const int L = 7;
 const int GRIS = 8;
 const int VIDE = 0;		// Signifie : "Il n'y a rien ici"
 
-// id == 1 : 1 position de rotation
-// id % 2 == 0 : 2 positions de rotation
-// Sinon : 4 positions de rotation
-
 /* Contient les positions de départ des tétrominos
  * À ne surtout pas utiliser directement */
 const int TETROMINOS[448] = {
@@ -164,7 +160,8 @@ const int TETROMINOS[448] = {
 	0,L,L,0,
 	0,0,0,0
 };		// NE VRAIMENT PAS UTILISER ÇA DIRECTEMENT	
-// Plutôt utiliser cette fonction :
+// Plutôt utiliser la fonction tetro :
+
 /* Renvoie un tableau (constant !) à 16 cases correspondant au tetromino d'indice id
  * rot doit être compris entre 0 et 3, et correspond au nombre de rotations horaires effectuées par le tétromino (modulo 4)
  * Le tableau renvoyé est en fait un pointeur vers un bout du tableau ci-dessus, mais ça revient au même */

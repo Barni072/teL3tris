@@ -81,6 +81,7 @@ void tetrominoSuivant(etat* e){
 	e -> reserveDispo = true;
 	e -> affiche = true;
 	e -> iDescente = 0;
+	e -> descenteRapide = false;	// Pour éviter les accidents stupides si la touche reste enfoncée
 	prochainSac(e);
 	return;
 }
@@ -127,17 +128,20 @@ void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 	return;
 }
 
+/* Vérifie si un mouvement du tétromino courant (translation de dx cases vers la droite et dy cases vers le 
+ * bas, accompagnée de drot rotations horaires) est valide, mais n'effectue pas le déplacement en lui-même */
 bool collision(etat* e,int dx,int dy,int drot){
 	int x = e->x + dx;
 	int y = e->y + dy;
+	int rota = ((e->rota + drot)%4 +4) %4;	// Bricolage pour avoir un entier entre 0 et 3...
 	for(int i = 0;i < 4;i++){
 		for(int j = 0;j < 4;j++){
 			if(x+i < 0 || x+i >= LARG){	// Cas où x+i est hors de la grille
-				if(blocT(tetro(e->idTetro,e->rota),i,j) != VIDE) return false;
+				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE) return false;
 			}else if(y+j < 0 || y+j >= HAUT){	// Cas où y+j est hors de la grille
-				if(blocT(tetro(e->idTetro,e->rota),i,j) != VIDE) return false;
+				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE) return false;
 			}else{		// Cas général, dans la grille
-				if(blocT(tetro(e->idTetro,e->rota),i,j) != VIDE && blocG(e,e->x + dx + i,e->y + dy + j) != VIDE){
+				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE && blocG(e,e->x + dx + i,e->y + dy + j) != VIDE){
 					return false;
 				}
 			}
@@ -146,7 +150,9 @@ bool collision(etat* e,int dx,int dy,int drot){
 	return true;
 }
 
-/* Translate le tétromino courant, si c'est possible */
+/* Translate le tétromino courant, si c'est possible
+ * L'entier dir correspond à une direction et doit être bien choisi
+ * (0 : haut ; 1 : droite ; 2 : bas ; 3 : gauche) */
 bool translation(etat* e,int dir){
 	switch(dir){
 		case 0:		// HAUT
@@ -248,14 +254,43 @@ void descenteImmediate(etat* e){
 	return;
 }
 
+/* Fonction auxilliaire de la fonction rotation, effectue la rotation (change l'état) en prenant
+ * en compte les wallkicks et en supposant que les tests de collisions ont déjà été faits */
+void appliqueRotation(etat* e,int wkx,int wky,bool sens){
+	if(sens) e -> rota = (((e->rota + 1) % 4)+4)%4;	// Formule un peu suspecte mais requise, pour toujours avoir e->rota entre 0 et 3
+	else e -> rota = (((e->rota -1) % 4)+4)%4;		// Idem
+	e -> x += wkx;
+	e -> y += wky;
+	e -> affiche = true;
+	return;
+}
+
 /* Modifie l'état e pour que le tétromino courant soit considéré comme ayant tourné, si c'est possible (sinon, ne fait rien)
  * Le booléen sens est vrai SSI la rotation demandée est dans le sens horaire
  * ON IMPLÉMENTERA LES WALL KICKS ICI */
 void rotation(etat* e,bool sens){
-	// Il faudra vérifier les collisions
-	// Pour l'instant, c'est la fête à la saucisse la plus générale
-	if(sens) e -> rota = (((e->rota + 1) % 4)+4)%4;	// Formule un peu suspecte mais requise, pour toujours avoir e->rota entre 0 et 3
-	else e -> rota = (((e->rota -1) % 4)+4)%4;		// Idem
-	e -> affiche = true;
+	int drot;
+	if(sens) drot = 1;
+	else drot = 3;
+	// OU BIEN : int drot = 3 - (2 * sens);	?	(Alternative à tester...)
+	if(collision(e,0,0,drot)){
+		appliqueRotation(e,0,0,sens);
+	}else if(collision(e,1,0,drot)){	// Wallkick vers la droite
+		appliqueRotation(e,1,0,sens);
+	}else if(collision(e,-1,0,drot)){	// Wallkick vers la gauche
+		appliqueRotation(e,-1,0,sens);
+	}else if(collision(e,0,1,drot)){	// Wallkick vers le bas
+		appliqueRotation(e,0,1,sens);
+	}else if(collision(e,1,-1,drot)){	// Wallkick vers le haut
+		appliqueRotation(e,0,-1,sens);
+	}else if(e->idTetro == I && collision(e,-2,0,drot)){	// Double wallkick à gauche, seulement pour le tétromino I
+		appliqueRotation(e,-2,0,sens);
+	}	// Si tout échoue, on considère que la rotation a échoué, et on ne fait rien
+	return;
+}
+
+/* Active ou désactive la descente rapide, selon la valeur du booléen rapide */
+void descenteRapide(etat* e,bool rapide){
+	e -> descenteRapide = rapide;
 	return;
 }

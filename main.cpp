@@ -5,6 +5,7 @@
 #include "grille.h"
 #include "entree.h"
 
+/* Initialise proprement les structures utilisées */
 void initialisation(etat* e){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	fenetre = SDL_CreateWindow("Tetris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,550,550,SDL_WINDOW_SHOWN);
@@ -28,12 +29,14 @@ int main(){
 	initialisation(&e);
 	int ticks = SDL_GetTicks();
 	while(!(e.fermeture)){
-		if(e.iDescente >= e.delaiDescente){		// ">=" nécessaire pour ne pas rester bloqué lorsque e.delaiDescente change...
+		if(e.iDescente >= e.delaiDescente || (e.descenteRapide && e.iDescente >= 5)){
+			// ">=" nécessaire pour ne pas rester bloqué lorsque e.delaiDescente change
+			// Descente rapide fixée ici à 100 Hz (tous les 5 ticks)
 			descenteAuto(&e);
 			e.iDescente = 0;
 		}
 		appliqueCommandes(&e);
-		if(e.affiche) afficheTemp(&e);		// Ne recharge l'affichage que si c'est nécessaire
+		if(e.affiche) affiche(&e);		// Ne recharge l'affichage que si c'est nécessaire
 		e.iDescente += 1;
 		while(SDL_GetTicks() < ticks + 2){ /* Attente active, 2ms (500Hz) */ }
 		ticks = SDL_GetTicks();		

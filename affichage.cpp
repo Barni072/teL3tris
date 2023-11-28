@@ -137,8 +137,9 @@ void afficheSuivants(etat* e,int nb,int offset_x,int offset_y){
 	return;
 }
 
-/* TEMPORAIRE ! Affiche un peu en vrac un exemple de ce qui est déjà implémenté */
-void afficheTemp(etat* e){
+/* TEMPORAIRE ! Affiche un peu en vrac un exemple de ce qui est déjà implémenté
+ * Forçait des blocs à réapparaître en bas de la grille... */
+/*void afficheTemp(etat* e){
 	e -> affiche = false;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
 	SDL_RenderClear(rndr);
@@ -181,5 +182,16 @@ void afficheTemp(etat* e){
 	afficheReserve(e,280,5);
 	afficheSuivants(e,3,280,130);
 	SDL_RenderPresent(rndr);		// MARCHE SEULEMENT SOUS WAYLAND !!
+	return;
+}*/
+
+void affiche(etat* e){
+	e -> affiche = false;
+	SDL_SetRenderDrawColor(rndr,0,0,0,0);
+	SDL_RenderClear(rndr);
+	afficheGrillePrincipale(e,5,5);
+	afficheReserve(e,280,5);
+	afficheSuivants(e,3,280,130);
+	SDL_RenderPresent(rndr);	// NE SEMBLE TOUJOURS PAS FONCTIONNER SOUS X11...
 	return;
 }

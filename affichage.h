@@ -12,6 +12,6 @@ extern const int TLBC;
 //void afficheGrillePrincipale(etat* e,int offset_x,int offset_y);
 //void afficheReserve(etat* e,int offset_x,int offset_y);
 //void afficheSuivants(etat* e,int nb,int offset_x,int offset_y);
-void afficheTemp(etat* e);
+void affiche(etat* e);
 
 #endif 
