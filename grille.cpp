@@ -132,7 +132,8 @@ void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 }
 
 /* Vérifie si un mouvement du tétromino courant (translation de dx cases vers la droite et dy cases vers le 
- * bas, accompagnée de drot rotations horaires) est valide, mais n'effectue pas le déplacement en lui-même */
+ * bas, accompagnée de drot rotations horaires) est valide, MAIS N'EFFECTUE PAS LE DÉPLACEMENT
+ * (Renvoie vrai si le mouvement est valide, et faux en cas de collision) */
 bool collision(etat* e,int dx,int dy,int drot){
 	int x = e->x + dx;
 	int y = e->y + dy;
@@ -154,7 +155,7 @@ bool collision(etat* e,int dx,int dy,int drot){
 }
 
 /* Translate le tétromino courant, si c'est possible
- * L'entier dir correspond à une direction et doit être bien choisi
+ * L'entier dir correspond à une direction et doit être bien choisi :
  * (0 : haut ; 1 : droite ; 2 : bas ; 3 : gauche) */
 bool translation(etat* e,int dir){
 	switch(dir){
@@ -296,4 +297,15 @@ void rotation(etat* e,bool sens){
 void descenteRapide(etat* e,bool rapide){
 	e -> descenteRapide = rapide;
 	return;
+}
+
+/* Renvoie un entier correspondant aux nombre de cases que le tétromino courant doit descendre avant
+ * d'arriver à la position où il ne pourra plus descendre (ie une case au dessus de la collision)
+ * (Fonction auxiliaire à l'affichage d'un "fantôme" du tétromino courant à cette position) */
+int offsetFantome(etat* e){
+	int i = 1;
+	while(collision(e,0,i,0)){
+		i += 1;
+	}
+	return i-1;
 }

@@ -1,5 +1,5 @@
 tetris: main.o affichage.o grille.o entree.o tetrominos.o
-	g++ main.o affichage.o grille.o entree.o tetrominos.o -o tetris -lSDL2
+	g++ main.o affichage.o grille.o entree.o tetrominos.o -o tetris -lSDL2 -lSDL2_ttf
 main.o: main.cpp affichage.cpp affichage.h grille.cpp grille.h entree.cpp entree.h
 	g++ -c main.cpp
 affichage.o: affichage.cpp affichage.h grille.cpp grille.h tetrominos.cpp tetrominos.h

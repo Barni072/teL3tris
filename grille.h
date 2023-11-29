@@ -40,5 +40,6 @@ void descenteImmediate(etat* e);
 //void appliqueRotation(etat* e,int wkx,int wky,bool sens);
 void rotation(etat* e,bool sens);
 void descenteRapide(etat* e,bool rapide);
+int offsetFantome(etat* e);
 
 #endif
