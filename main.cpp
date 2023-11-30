@@ -32,9 +32,9 @@ int main(){
 	initialisation(&e);
 	int ticks = SDL_GetTicks();
 	while(!(e.fermeture)){
-		if(e.iDescente >= e.delaiDescente || (e.descenteRapide && e.iDescente >= 10)){
+		if(e.iDescente >= e.delaiDescente || (e.descenteRapide && e.iDescente >= 25)){
 			// ">=" nécessaire pour ne pas rester bloqué lorsque e.delaiDescente change
-			// Descente rapide fixée ici à 50 Hz (soit tous les 10 ticks, la descente "non rapide" sera probablement plus rapide dans les niveaux les plus élevés)
+			// Descente rapide fixée la même vitesse que le niveau 20
 			descenteAuto(&e);
 			e.iDescente = 0;
 		}

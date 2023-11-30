@@ -59,75 +59,76 @@ void prochainSac(etat* e){
 	return;
 }
 
-/* Place le prochain tétromino à son "point de départ" sur la grille de jeu et effectue les initialisations requises
- * Permettra éventuellement d'affiner un peu les points de départ des différents tétrominos
- * Pourrait servir à vérifier s'il y a une collision en posant le tétromino, et déclencher ainsi la fin de la partie... */
-void placeTetromino(etat* e){
-	e -> x = 3;
-	e -> y = 0;
-	e -> rota = 0;
-	e -> iDescente = 0;
-	e -> descenteRapide = false;	// Pour éviter les accidents stupides si la touche reste enfoncée
-	e -> affiche = true;
-	return;
-}
-
-/* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
- * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
-void tetrominoSuivant(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
-	e -> idTetro = e -> suivants[0];
-	int i = 0;
-	while(i < 13 && e -> suivants[i] != VIDE){
-		e -> suivants[i] = e -> suivants[i+1];
-		i += 1;
+/* Fait correspondre le "niveau", et surtout la vitesse de descente automatique des tétrominos, au nombre de lignes actuel
+ * Les vitesses de descente sont calqués sur la version GB du jeu, à quelques arrondis près */
+void changeVitesse(etat* e){
+	switch(e->niveau){
+		case(0):
+			e->delaiDescente = 442;
+			break;
+		case(1):
+			e->delaiDescente = 408;
+			break;
+		case(2):
+			e->delaiDescente = 375;
+			break;
+		case(3):
+			e->delaiDescente = 342;
+			break;
+		case(4):
+			e->delaiDescente = 308;
+			break;
+		case(5):
+			e->delaiDescente = 275;
+			break;
+		case(6):
+			e->delaiDescente = 217;
+			break;
+		case(7):
+			e->delaiDescente = 183;
+			break;
+		case(8):
+			e->delaiDescente = 142;
+			break;
+		case(9):
+			e->delaiDescente = 92;
+			break;
+		case(10):
+			e->delaiDescente = 83;
+			break;
+		case(11):
+			e->delaiDescente = 75;
+			break;
+		case(12):
+			e->delaiDescente = 67;
+			break;
+		case(13):
+			e->delaiDescente = 58;
+			break;
+		case(14):
+			e->delaiDescente = 50;
+			break;
+		case(15):
+			e->delaiDescente = 50;
+			break;
+		case(16):
+			e->delaiDescente = 42;
+			break;
+		case(17):
+			e->delaiDescente = 42;
+			break;
+		case(18):
+			e->delaiDescente = 33;
+			break;
+		case(19):
+			e->delaiDescente = 33;
+			break;
+		default:	// Niveau 20 et supérieurs, la vitesse reste fixe
+			e->delaiDescente = 25;
+			break;
+		
 	}
-	placeTetromino(e);
-	e -> suivants[13] = VIDE;
-	e -> reserveDispo = true;
-	prochainSac(e);
-	return;
-}
-
-/* Initialisa proprement la structure d'état */
-void initEtat(etat* e){
-	e -> idTetro = VIDE;
-	e -> reserve = VIDE;
-	for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;
-	e -> g = new int[HAUT*LARG];
-	for(int i = 0;i < HAUT*LARG;i++){
-		e->g[i] = 0;
-	}
-	e -> fermeture = false;
-	e -> delaiDescente = 500;	// TEMPORAIRE, correspondra au niveau 1 (?)
-	e -> descenteRapide = false;
-	e -> lignes = 0;
-	// Génère les 14 premiers tétrominos :
-	prochainSac(e);
-	prochainSac(e);
-	tetrominoSuivant(e);
-	return;
-}
-
-/* Détruit proprement la structure d'état */
-void detruireEtat(etat* e){
-	delete[] e -> g;
-	return;
-}
-
-/* Envoie le tétromino courant dans la réserve (si possible), et le remplace par celui de la réserve (ou par le suivant lors de la 1ère utilisation de la réserve) */
-void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
-	if(e -> reserveDispo){
-		if(e -> reserve == VIDE){	// Cas particulier de la première utilisation de la réserve
-			e -> reserve = e -> idTetro;
-			tetrominoSuivant(e);
-		}else{
-			int tmp = e -> reserve;
-			e -> reserve = e -> idTetro;
-			e -> idTetro = tmp;
-			placeTetromino(e);
-		}
-		e -> reserveDispo = false;
-	}
+	e -> niveau += 1;
 	return;
 }
 
@@ -155,6 +156,7 @@ bool collision(etat* e,int dx,int dy,int drot){
 }
 
 /* Translate le tétromino courant, si c'est possible
+ * Renvoie un booléen correspondant à la réussite de l'opération
  * L'entier dir correspond à une direction et doit être bien choisi :
  * (0 : haut ; 1 : droite ; 2 : bas ; 3 : gauche) */
 bool translation(etat* e,int dir){
@@ -194,6 +196,90 @@ bool translation(etat* e,int dir){
 	return false;
 }
 
+/* Actions à effetcuer en fin de partie
+ * Pour l'instant, ça consiste à demander la fermeture immédiate du programme
+ * (la fermeture est brutale, mais propre, cette fonction ne ferme pas directement le programme,
+ * et la fonction main doit se charger de détruire toutes les structures utilisées) */
+void finPartie(etat* e){
+	e -> fermeture = true;
+	return;
+}
+
+/* Place le prochain tétromino à son "point de départ" sur la grille de jeu et effectue les initialisations requises
+ * Permettra éventuellement d'affiner un peu les points de départ des différents tétrominos
+ * Pourrait servir à vérifier s'il y a une collision en posant le tétromino, et déclencher ainsi la fin de la partie... */
+void placeTetromino(etat* e){
+	e -> x = 3;
+	e -> y = 0;
+	e -> rota = 0;
+	e -> iDescente = 0;
+	e -> descenteRapide = false;	// Pour éviter les accidents stupides si la touche reste enfoncée
+	if(!collision(e,0,0,0)) finPartie(e);	// Si on ne peut pas placer le bloc, la partie est terminée
+	// RAJOUTER DES WALLKICKS LATÉRAUX ICI
+	e -> affiche = true;
+	return;
+}
+
+/* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
+ * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
+void tetrominoSuivant(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
+	e -> idTetro = e -> suivants[0];
+	int i = 0;
+	while(i < 13 && e -> suivants[i] != VIDE){
+		e -> suivants[i] = e -> suivants[i+1];
+		i += 1;
+	}
+	placeTetromino(e);
+	e -> suivants[13] = VIDE;
+	e -> reserveDispo = true;
+	prochainSac(e);
+	return;
+}
+
+/* Initialisa proprement la structure d'état */
+void initEtat(etat* e){
+	e -> idTetro = VIDE;
+	e -> reserve = VIDE;
+	for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;
+	e -> g = new int[HAUT*LARG];
+	for(int i = 0;i < HAUT*LARG;i++){
+		e->g[i] = 0;
+	}
+	e -> fermeture = false;
+	e -> descenteRapide = false;
+	e -> lignes = 0;
+	e -> niveau = 0;	// DEVRAIT, PLUS TARD, ÊTRE ENTRÉ PAR L'UTILISATEUR
+	changeVitesse(e);
+	// Génère les 14 premiers tétrominos :
+	prochainSac(e);
+	prochainSac(e);
+	tetrominoSuivant(e);
+	return;
+}
+
+/* Détruit proprement la structure d'état */
+void detruireEtat(etat* e){
+	delete[] e -> g;
+	return;
+}
+
+/* Envoie le tétromino courant dans la réserve (si possible), et le remplace par celui de la réserve (ou par le suivant lors de la 1ère utilisation de la réserve) */
+void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
+	if(e -> reserveDispo){
+		if(e -> reserve == VIDE){	// Cas particulier de la première utilisation de la réserve
+			e -> reserve = e -> idTetro;
+			tetrominoSuivant(e);
+		}else{
+			int tmp = e -> reserve;
+			e -> reserve = e -> idTetro;
+			e -> idTetro = tmp;
+			placeTetromino(e);
+		}
+		e -> reserveDispo = false;
+	}
+	return;
+}
+
 /* Vérifie si des lignes complétées existent dans la grille
  * Si oui, les enlève, incrémente le compteur de lignes, et n'incrémente pas encore le score...
  * GROS PROBLÈMES QUAND 2 LIGNES D'AFFILÉE SONT COMPLÉTÉES */
@@ -226,6 +312,7 @@ void enleveLignes(etat* e){
 	}
 	e -> lignes += nbLignes;	// Le compteur de lignes n'a pas encore été testé...
 	// + Il faudra incrémenter le score ici
+	if(e->lignes >= 10*(e->niveau)) changeVitesse(e);
 	return;
 }
 
@@ -285,8 +372,12 @@ void rotation(etat* e,bool sens){
 		appliqueRotation(e,-1,0,sens);
 	}else if(collision(e,0,1,drot)){	// Wallkick vers le bas
 		appliqueRotation(e,0,1,sens);
-	}else if(collision(e,1,-1,drot)){	// Wallkick vers le haut
-		appliqueRotation(e,0,-1,sens);
+	/*}else if(collision(e,1,-1,drot)){	// Wallkick vers le haut
+		appliqueRotation(e,0,-1,sens);*/	// Permettrait de faire durer la partie indéfiniment...
+	}else if(collision(e,1,1,drot)){	// Wallkick bas-droite
+		appliqueRotation(e,1,1,sens);
+	}else if(collision(e,-1,1,drot)){	// Wallkick bas-gauche
+		appliqueRotation(e,-1,1,sens);
 	}else if(e->idTetro == I && collision(e,-2,0,drot)){	// Double wallkick à gauche, seulement pour le tétromino I
 		appliqueRotation(e,-2,0,sens);
 	}	// Si tout échoue, on considère que la rotation a échoué, et on ne fait rien

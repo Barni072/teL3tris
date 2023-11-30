@@ -4,7 +4,7 @@
  
  SDL_Event evnt;
  
-/* Devra être appelé à chaque "tick", vérifie les commandes et déclenche les actions associées */
+/* Doit être appelé à chaque itération de la boucle de jeu principale, vérifie les commandes et déclenche les actions associées */
 void appliqueCommandes(etat* e){
 	if(SDL_PollEvent(&evnt)){
 		switch(evnt.type){
@@ -16,10 +16,6 @@ void appliqueCommandes(etat* e){
 				// Touche enfoncée
 				case(SDL_KEYDOWN):
 					switch(evnt.key.keysym.sym){
-						/*case(SDLK_r):	// R
-							// DEBUG, force le tétromino suivant, il faudra enlever ça à terme
-							tetrominoSuivant(e);
-							break;*/
 						case(SDLK_q):	// Q
 							// Translation gauche
 							translation(e,3);
@@ -47,9 +43,6 @@ void appliqueCommandes(etat* e){
 						case(SDLK_c):	// C
 							reserve(e);
 							break;
-						//case(SDLK		// Aucune idée de la façon dont sélectionner la touche espace...
-							// Pause ?
-							//break;
 						default:
 							break;
 					}		
@@ -60,4 +53,4 @@ void appliqueCommandes(etat* e){
 	}
 	return;
 }
-// TODO : Refaire cette fonction avec des commandes non hardcodées ?
+// TODO : Refaire cette fonction avec des commandes non hardcodées, et implémenter une pause ?

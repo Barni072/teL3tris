@@ -19,6 +19,7 @@ struct s_etat{
 	int iDescente;		// Compteur d'itérations de la boucle principale, la tétromino courant descent automatiquement quand ceci atteint delaiDescente
 	bool descenteRapide;	// Vrai SSI le jeu est actuellement en mode descente rapide SSI la touche de descente rapide est actuellement enfoncée (mais désactivé automatiquement lorsque le tétromino courant change)
 	int lignes;		// Compteur de lignes
+	int niveau;		// Pas forcément dépendant du nombre de lignes, devrait pouvoir être sélectionné par l'utilisateur, n'est pas destiné à être affiché
 };
 typedef s_etat etat;
 
@@ -27,7 +28,7 @@ void ecritBlocG(etat* e,int i,int j,int clr);
 //void permute(int* t,int i,int j);
 void prochainSac(etat* e);
 //void enleveLignes(etat* e);
-// void placeTetromino(etat* e);
+//void placeTetromino(etat* e);
 void tetrominoSuivant(etat* e);
 void initEtat(etat* e);
 void detruireEtat(etat* e);
@@ -41,5 +42,7 @@ void descenteImmediate(etat* e);
 void rotation(etat* e,bool sens);
 void descenteRapide(etat* e,bool rapide);
 int offsetFantome(etat* e);
+//void finPartie(etat* e);
+//void changeVitesse(etat* e);
 
 #endif
