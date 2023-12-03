@@ -20,6 +20,7 @@ struct s_etat{
 	bool descenteRapide;	// Vrai SSI le jeu est actuellement en mode descente rapide SSI la touche de descente rapide est actuellement enfoncée (mais désactivé automatiquement lorsque le tétromino courant change)
 	int lignes;		// Compteur de lignes
 	int niveau;		// Pas forcément dépendant du nombre de lignes, devrait pouvoir être sélectionné par l'utilisateur, n'est pas destiné à être affiché
+	int score;
 };
 typedef s_etat etat;
 

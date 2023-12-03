@@ -149,15 +149,20 @@ void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
  * Pour l'instant, seule la grille est présente... */
 void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	dessineGrille(offset_x,offset_y,4,2,false);
-	/*TTF_Font* font = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",9);	// fontspace.com/jupiteroid-font-f90261
-	SDL_Surface* txtScore = TTF_RenderText_Blended(font,"Score : ",SDL_Color{255,255,255,0});
-	SDL_Surface* txtLignes = TTF_RenderText_Blended(font,"Lignes : ",SDL_Color{255,255,255,0});
-	
-	// Il va maintenant falloir maîtriser les surfaces et les textures pour afficher ça, à suivre...
-	
+	TTF_Font* font = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC-5);	// fontspace.com/jupiteroid-font-f90261
+	SDL_Surface* txtScore = TTF_RenderText_Shaded(font,"Score : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+	SDL_Surface* txtLignes = TTF_RenderText_Shaded(font,"Lignes : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+	SDL_Texture* ttxtLignes=SDL_CreateTextureFromSurface(rndr,txtLignes);
+	SDL_Texture* ttxtScore=SDL_CreateTextureFromSurface(rndr,txtScore);
+	SDL_Rect srcsc{ 0, 0, txtScore->w, txtScore->h };
+	SDL_Rect srcln{ 0, 0, txtLignes->w, txtLignes->h };
+	SDL_Rect dstsc{ offset_x+3, offset_y+1, txtScore->w, txtScore->h };
+	SDL_Rect dstln{ offset_x+3, offset_y+1+TLBC, txtLignes->w, txtLignes->h };
+	SDL_RenderCopy(rndr,ttxtLignes , &srcln, &dstln);
+	SDL_RenderCopy(rndr,ttxtScore , &srcsc, &dstsc);
 	SDL_FreeSurface(txtScore);
 	SDL_FreeSurface(txtLignes);
-	TTF_CloseFont(font);*/
+	TTF_CloseFont(font);
 	return;
 }
 

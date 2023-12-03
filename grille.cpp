@@ -62,10 +62,11 @@ void prochainSac(etat* e){
 /* Fait correspondre le "niveau", et surtout la vitesse de descente automatique des tétrominos, au nombre de lignes actuel
  * Les vitesses de descente sont calqués sur la version GB du jeu, à quelques arrondis près */
 void changeVitesse(etat* e){
+	e -> niveau += 1;
 	switch(e->niveau){
-		case(0):
+		/*case(0):
 			e->delaiDescente = 442;
-			break;
+			break;*/	// Ne sert à rien ici, sert dans initEtat
 		case(1):
 			e->delaiDescente = 408;
 			break;
@@ -128,7 +129,6 @@ void changeVitesse(etat* e){
 			break;
 		
 	}
-	e -> niveau += 1;
 	return;
 }
 
@@ -210,7 +210,14 @@ void finPartie(etat* e){
  * Pourrait servir à vérifier s'il y a une collision en posant le tétromino, et déclencher ainsi la fin de la partie... */
 void placeTetromino(etat* e){
 	e -> x = 3;
-	e -> y = 0;
+	// Les différents tétrominos apparaissent à des hauteurs différentes, de façon à être "tout en haut" de l'aire de jeu
+	if(e->idTetro == I){
+		e -> y = -2;
+	}else if(e -> idTetro == T){
+		e -> y = 0;
+	}else{
+		e -> y = -1;
+	}
 	e -> rota = 0;
 	e -> iDescente = 0;
 	e -> descenteRapide = false;	// Pour éviter les accidents stupides si la touche reste enfoncée
@@ -249,7 +256,7 @@ void initEtat(etat* e){
 	e -> descenteRapide = false;
 	e -> lignes = 0;
 	e -> niveau = 0;	// DEVRAIT, PLUS TARD, ÊTRE ENTRÉ PAR L'UTILISATEUR
-	changeVitesse(e);
+	e -> delaiDescente = 442;	// Vitesse du niveau 0
 	// Génère les 14 premiers tétrominos :
 	prochainSac(e);
 	prochainSac(e);
@@ -312,7 +319,7 @@ void enleveLignes(etat* e){
 	}
 	e -> lignes += nbLignes;	// Le compteur de lignes n'a pas encore été testé...
 	// + Il faudra incrémenter le score ici
-	if(e->lignes >= 10*(e->niveau)) changeVitesse(e);
+	if(e->lignes > 10*(e->niveau)) changeVitesse(e);
 	return;
 }
 
@@ -340,6 +347,7 @@ void descenteAuto(etat* e){
 
 /* Descend le tétromino courant autant que possible immédiatement, et passe au suivant */
 void descenteImmediate(etat* e){
+	e -> iDescente = 0;	// Sinon, le tétromino suivant ferait sa première descente plus tôt que prévu
 	while(translation(e,2));
 	fixeTetromino(e);
 	return;
@@ -380,6 +388,8 @@ void rotation(etat* e,bool sens){
 		appliqueRotation(e,-1,1,sens);
 	}else if(e->idTetro == I && collision(e,-2,0,drot)){	// Double wallkick à gauche, seulement pour le tétromino I
 		appliqueRotation(e,-2,0,sens);
+	}else if(e->idTetro == I && collision(e,0,2,drot)){		// Double wallkick bas, seulement pour le tétromino I
+		appliqueRotation(e,0,2,sens);
 	}	// Si tout échoue, on considère que la rotation a échoué, et on ne fait rien
 	return;
 }
