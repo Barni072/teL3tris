@@ -62,11 +62,10 @@ void prochainSac(etat* e){
 /* Fait correspondre le "niveau", et surtout la vitesse de descente automatique des tétrominos, au nombre de lignes actuel
  * Les vitesses de descente sont calqués sur la version GB du jeu, à quelques arrondis près */
 void changeVitesse(etat* e){
-	e -> niveau += 1;
 	switch(e->niveau){
-		/*case(0):
+		case(0):
 			e->delaiDescente = 442;
-			break;*/	// Ne sert à rien ici, sert dans initEtat
+			break;
 		case(1):
 			e->delaiDescente = 408;
 			break;
@@ -127,7 +126,6 @@ void changeVitesse(etat* e){
 		default:	// Niveau 20 et supérieurs, la vitesse reste fixe
 			e->delaiDescente = 25;
 			break;
-		
 	}
 	return;
 }
@@ -198,8 +196,8 @@ bool translation(etat* e,int dir){
 
 /* Actions à effetcuer en fin de partie
  * Pour l'instant, ça consiste à demander la fermeture immédiate du programme
- * (la fermeture est brutale, mais propre, cette fonction ne ferme pas directement le programme,
- * et la fonction main doit se charger de détruire toutes les structures utilisées) */
+ * (la fermeture est brutale, mais propre : cette fonction ne ferme pas directement le programme,
+ * et c'est la fonction main qui doit se charger de détruire toutes les structures utilisées) */
 void finPartie(etat* e){
 	e -> fermeture = true;
 	return;
@@ -243,7 +241,7 @@ void tetrominoSuivant(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLL
 	return;
 }
 
-/* Initialisa proprement la structure d'état */
+/* Initialise proprement la structure d'état */
 void initEtat(etat* e){
 	e -> idTetro = VIDE;
 	e -> reserve = VIDE;
@@ -255,8 +253,9 @@ void initEtat(etat* e){
 	e -> fermeture = false;
 	e -> descenteRapide = false;
 	e -> lignes = 0;
+	e -> score = 0;
 	e -> niveau = 0;	// DEVRAIT, PLUS TARD, ÊTRE ENTRÉ PAR L'UTILISATEUR
-	e -> delaiDescente = 442;	// Vitesse du niveau 0
+	changeVitesse(e);
 	// Génère les 14 premiers tétrominos :
 	prochainSac(e);
 	prochainSac(e);
@@ -317,9 +316,25 @@ void enleveLignes(etat* e){
 			j += 1;		// Permet de détecter le cas où 2 lignes "d'affilée" sont complétées (sinon, on saute la 2ème...)
 		}
 	}
-	e -> lignes += nbLignes;	// Le compteur de lignes n'a pas encore été testé...
-	// + Il faudra incrémenter le score ici
-	if(e->lignes > 10*(e->niveau)) changeVitesse(e);
+	e -> lignes += nbLignes;
+	switch(nbLignes){	// Incrémentation du score
+		case(1):
+			e -> score += 40*(e->niveau+1);
+			break;
+		case(2):
+			e -> score += 100*(e->niveau+1);
+			break;
+		case(3):
+			e -> score += 300*(e->niveau+1);
+			break;
+		case(4):
+			e -> score += 1200*(e->niveau+1);
+			break;
+	}
+	if(e->lignes >= 10*(e->niveau+1)){
+		e->niveau += 1;
+		changeVitesse(e);
+	}
 	return;
 }
 
@@ -341,6 +356,9 @@ void fixeTetromino(etat* e){
 void descenteAuto(etat* e){
 	if(!translation(e,2)){
 		fixeTetromino(e);
+	}else if(e -> descenteRapide){
+		e -> score += 1;
+		// On veut ajouter un point seulement lorsque la descente actuelle est rapide, et a effectivement lieu
 	}
 	return;
 }
@@ -348,7 +366,7 @@ void descenteAuto(etat* e){
 /* Descend le tétromino courant autant que possible immédiatement, et passe au suivant */
 void descenteImmediate(etat* e){
 	e -> iDescente = 0;	// Sinon, le tétromino suivant ferait sa première descente plus tôt que prévu
-	while(translation(e,2));
+	while(translation(e,2)) e->score += 2;	// On augmente le score de 2 points par bloc descendu
 	fixeTetromino(e);
 	return;
 }
@@ -366,7 +384,7 @@ void appliqueRotation(etat* e,int wkx,int wky,bool sens){
 
 /* Modifie l'état e pour que le tétromino courant soit considéré comme ayant tourné, si c'est possible (sinon, ne fait rien)
  * Le booléen sens est vrai SSI la rotation demandée est dans le sens horaire
- * ON IMPLÉMENTERA LES WALL KICKS ICI */
+ * Si la rotation n'est est bloquée par un mur ou un des blocs de la grille, on essaie de translater légèrement le tétromino courant ("wallkick") */
 void rotation(etat* e,bool sens){
 	int drot;
 	if(sens) drot = 1;

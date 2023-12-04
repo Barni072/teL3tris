@@ -5,6 +5,7 @@
 extern SDL_Window* fenetre;
 extern SDL_Renderer* rndr;
 extern const int TLBC;
+extern const int MARGE;
 
 //void dessineGrille(int x,int y,int largeur,int hauteur,bool quadri);
 //int couleurBloc(int clr);

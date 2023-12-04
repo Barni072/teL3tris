@@ -2,14 +2,18 @@
  #include <SDL2/SDL_ttf.h>
  #include "grille.h"
  #include "tetrominos.h"
+ #include "affichage.h"
+ #include <sstream>
+ #include <iostream>
+ using namespace std;
  
 // Variables pour SDL
 SDL_Window* fenetre;
 SDL_Renderer* rndr;
  
-// Taille d'un bloc, en pixels
-const int TLBC = 25;
- 
+const int TLBC = 30;	// Taille d'un bloc, en pixels (le texte est difficile à lire si cette taille est trop petite)
+const int MARGE = 8;	// Taille des marges entre les grilles et les bords de la fenêtre, en pixels
+
  /* Affiche une grille avec ou sans quadrillage selon le booléen quadri
  * La grille est blanche, le quadrillage est gris
  * x et y sont les coordonnées du pixel en haut à gauche de la grille
@@ -149,18 +153,28 @@ void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
  * Pour l'instant, seule la grille est présente... */
 void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	dessineGrille(offset_x,offset_y,4,2,false);
-	TTF_Font* font = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC-5);	// fontspace.com/jupiteroid-font-f90261
+	TTF_Font* font = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
+	stringstream ssScr,ssNiv,ssLin;
+	/*ssScr << e -> score;
+	ssNiv << e -> niveau;
+	ssLin << e -> lignes;*/
 	SDL_Surface* txtScore = TTF_RenderText_Shaded(font,"Score : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
-	SDL_Surface* txtLignes = TTF_RenderText_Shaded(font,"Lignes : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
-	SDL_Texture* ttxtLignes=SDL_CreateTextureFromSurface(rndr,txtLignes);
-	SDL_Texture* ttxtScore=SDL_CreateTextureFromSurface(rndr,txtScore);
-	SDL_Rect srcsc{ 0, 0, txtScore->w, txtScore->h };
-	SDL_Rect srcln{ 0, 0, txtLignes->w, txtLignes->h };
-	SDL_Rect dstsc{ offset_x+3, offset_y+1, txtScore->w, txtScore->h };
-	SDL_Rect dstln{ offset_x+3, offset_y+1+TLBC, txtLignes->w, txtLignes->h };
-	SDL_RenderCopy(rndr,ttxtLignes , &srcln, &dstln);
-	SDL_RenderCopy(rndr,ttxtScore , &srcsc, &dstsc);
+	SDL_Surface* txtNiveau = TTF_RenderText_Shaded(font,"Niveau : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+	SDL_Surface* txtLignes = TTF_RenderText_Shaded(font,"Lignes : " /*+ ssLin.str()*/,SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+	SDL_Texture* ttxtScore = SDL_CreateTextureFromSurface(rndr,txtScore);
+	SDL_Texture* ttxtNiveau = SDL_CreateTextureFromSurface(rndr,txtNiveau);
+	SDL_Texture* ttxtLignes = SDL_CreateTextureFromSurface(rndr,txtLignes);	
+	SDL_Rect srcScr{0,0,txtScore->w,txtScore->h};
+	SDL_Rect srcNiv{0,0,txtNiveau->w,txtNiveau->h};
+	SDL_Rect srcLin{0,0,txtLignes->w,txtLignes->h};
+	SDL_Rect dstScr{offset_x+3,offset_y+1,txtScore->w,txtScore->h};
+	SDL_Rect dstNiv{offset_x+3,offset_y+1+2*TLBC/3,txtLignes->w,txtLignes->h};
+	SDL_Rect dstLin{offset_x+3,offset_y+1+4*TLBC/3,txtLignes->w,txtLignes->h};
+	SDL_RenderCopy(rndr,ttxtScore,&srcScr,&dstScr);
+	SDL_RenderCopy(rndr,ttxtNiveau,&srcNiv,&dstNiv);
+	SDL_RenderCopy(rndr,ttxtLignes,&srcLin,&dstLin);
 	SDL_FreeSurface(txtScore);
+	SDL_FreeSurface(txtNiveau);
 	SDL_FreeSurface(txtLignes);
 	TTF_CloseFont(font);
 	return;
@@ -170,10 +184,21 @@ void affiche(etat* e){	// Il faudra remplacer les offsets "numériques" par des 
 	e -> affiche = false;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
 	SDL_RenderClear(rndr);
-	dessineGrillePrincipale(e,5,5);
-	dessineReserve(e,280,5);
-	dessineSuivants(e,3,280,130);
-	dessineLignesScore(e,280,455);
-	SDL_RenderPresent(rndr);	// NE SEMBLE TOUJOURS PAS FONCTIONNER SOUS X11...
+	dessineGrillePrincipale(e,MARGE,MARGE);
+	dessineReserve(e,(LARG+1)*TLBC + MARGE,MARGE);
+	dessineLignesScore(e,(LARG+1)*TLBC + MARGE,5*TLBC + MARGE);
+	dessineSuivants(e,3,(LARG+1)*TLBC + MARGE,8*TLBC + MARGE);
+	SDL_RenderPresent(rndr);	// NE SEMBLE TOUJOURS PAS FONCTIONNER SOUS X11
+	
+	// ANCIENNE VERSION (à moitié bricolée, probablelent pétée)
+	//dessineReserve(e,280,TLBC/5);
+	//dessineSuivants(e,3,(LARG+1)*TLBC + TLBC/5,130);
+	//dessineLignesScore(e,(LARG+1)*TLBC + TLBC/5,455);
+	
+	// DEBUG :	// Semble OK, mais je les laisse pour l'instant, tant que le vrai affichage n'est pas fonctionnel...
+	/*cout << "SCORE : " << e -> score << endl;
+	cout << "NIVEAU : " << e-> niveau << endl;
+	cout << "LIGNES : " << e -> lignes << endl;
+	cout << endl;*/
 	return;
 }

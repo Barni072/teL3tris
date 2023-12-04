@@ -10,7 +10,7 @@
 void initialisation(etat* e){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	TTF_Init();
-	fenetre = SDL_CreateWindow("Tetris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,550,550,SDL_WINDOW_SHOWN);
+	fenetre = SDL_CreateWindow("Tetris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,(LARG+5)*TLBC + 2*MARGE,HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	srand(time(NULL));
 	initEtat(e);
@@ -34,7 +34,7 @@ int main(){
 	while(!(e.fermeture)){
 		if(e.iDescente >= e.delaiDescente || (e.descenteRapide && e.iDescente >= 25)){
 			// ">=" nécessaire pour ne pas rester bloqué lorsque e.delaiDescente change
-			// Descente rapide fixée la même vitesse que le niveau 20
+			// Descente rapide fixée (manuellement...) la même vitesse que le niveau 20
 			descenteAuto(&e);
 			e.iDescente = 0;
 		}

@@ -13,14 +13,14 @@ struct s_etat{
 	int suivants[14];	// Indices des tetrominos à venir, assez grand pour 2 sacs
 	int reserve; 	// Indice du tétromino actuellement en réserve (VIDE s'il n'y en a pas)
 	bool reserveDispo;		// Si vrai, le tétromino courant ne provient pas de la réserve, et il est autorisé de l'y envoyer
-	bool fermeture;		// Si vrai, la fermeture (propre) du jeu interviendra sous peu
-	bool affiche;		// Doit être passé à vrai après tout changement destiné à être affiché, permet de ne pas rafraîchir l'affichage à chaque tick
+	bool fermeture;		// Si vrai, la fermeture (propre) du jeu interviendra très prochainement
+	bool affiche;		// Doit être passé à vrai après tout changement destiné à être affiché, permet de ne pas rafraîchir l'affichage à chaque frame
 	int delaiDescente;		// Délai actuel de la descente automatique, en milisecondes
-	int iDescente;		// Compteur d'itérations de la boucle principale, la tétromino courant descent automatiquement quand ceci atteint delaiDescente
+	int iDescente;		// Compteur d'itérations de la boucle principale, le tétromino courant descend automatiquement quand ce compteur atteint delaiDescente
 	bool descenteRapide;	// Vrai SSI le jeu est actuellement en mode descente rapide SSI la touche de descente rapide est actuellement enfoncée (mais désactivé automatiquement lorsque le tétromino courant change)
 	int lignes;		// Compteur de lignes
-	int niveau;		// Pas forcément dépendant du nombre de lignes, devrait pouvoir être sélectionné par l'utilisateur, n'est pas destiné à être affiché
-	int score;
+	int niveau;		// Augmente avec le nombre de lignes, devrait pouvoir être sélectionné par l'utilisateur
+	int score;		// Calculé à peu près comme dans la version GB, en rajoutant un bonus d'un point par case en descente rapide, et de 2 points par case en descente immédiate
 };
 typedef s_etat etat;
 
