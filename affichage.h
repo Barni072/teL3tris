@@ -15,5 +15,6 @@ extern const int MARGE;
 //void dessineSuivants(etat* e,int nb,int offset_x,int offset_y);
 //void dessineLignesScore(etat* e,int offset_x,int offset_y);
 void affiche(etat* e);
+void afficheAnimationLignes(etat* e);
 
 #endif 

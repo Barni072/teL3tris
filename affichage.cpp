@@ -180,7 +180,7 @@ void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	return;
 }
 
-void affiche(etat* e){	// Il faudra remplacer les offsets "numériques" par des choses un peu moins hardcodées...
+void affiche(etat* e){
 	e -> affiche = false;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
 	SDL_RenderClear(rndr);
@@ -190,15 +190,15 @@ void affiche(etat* e){	// Il faudra remplacer les offsets "numériques" par des 
 	dessineSuivants(e,3,(LARG+1)*TLBC + MARGE,8*TLBC + MARGE);
 	SDL_RenderPresent(rndr);	// NE SEMBLE TOUJOURS PAS FONCTIONNER SOUS X11
 	
-	// ANCIENNE VERSION (à moitié bricolée, probablelent pétée)
-	//dessineReserve(e,280,TLBC/5);
-	//dessineSuivants(e,3,(LARG+1)*TLBC + TLBC/5,130);
-	//dessineLignesScore(e,(LARG+1)*TLBC + TLBC/5,455);
-	
 	// DEBUG :	// Semble OK, mais je les laisse pour l'instant, tant que le vrai affichage n'est pas fonctionnel...
 	/*cout << "SCORE : " << e -> score << endl;
 	cout << "NIVEAU : " << e-> niveau << endl;
 	cout << "LIGNES : " << e -> lignes << endl;
 	cout << endl;*/
+	return;
+}
+
+void afficheAnimationLignes(etat* e){
+	affiche(e);	// Pour l'instant, c'est tout, il est l'heure de dormir
 	return;
 }

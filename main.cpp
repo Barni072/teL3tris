@@ -39,7 +39,13 @@ int main(){
 			e.iDescente = 0;
 		}
 		appliqueCommandes(&e);
-		if(e.affiche) affiche(&e);		// Ne recharge l'affichage que si c'est nécessaire
+		if(e.affiche){		// On ne veut recharger l'affichage que si c'est nécessaire
+			if(e.lignesPleines[0] == -1) affiche(&e);	// Cas où il n'y a pas de lignes pleines, on affiche le jeu normalement	
+			else{	// Il y a des lignes pleines, on les fait clignoter puis on les enlève
+				afficheAnimationLignes(&e);
+				supprimeLignes(&e);
+			}
+		}
 		e.iDescente += 1;
 		while(SDL_GetTicks() < ticks + 2){ /* Attente active, 2ms (500Hz) */ }
 		ticks = SDL_GetTicks();		

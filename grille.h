@@ -21,6 +21,7 @@ struct s_etat{
 	int lignes;		// Compteur de lignes
 	int niveau;		// Augmente avec le nombre de lignes, devrait pouvoir être sélectionné par l'utilisateur
 	int score;		// Calculé à peu près comme dans la version GB, en rajoutant un bonus d'un point par case en descente rapide, et de 2 points par case en descente immédiate
+	int lignesPleines[4];	// Contient les ordonnées des éventuelles lignes pleines, ou des -1 s'il n'y a pas assez de lignes pleines, sert à déclencher l'animation de suppression des lignes
 };
 typedef s_etat etat;
 
@@ -28,7 +29,9 @@ int blocG(etat* e,int i,int j);
 void ecritBlocG(etat* e,int i,int j,int clr);
 //void permute(int* t,int i,int j);
 void prochainSac(etat* e);
-//void enleveLignes(etat* e);
+//void enleveLignesOld(etat* e);	// ANCIENNE VERSION, SERA À ENLEVER
+//void detecteLignes(etat* e);
+void supprimeLignes(etat* e);
 //void placeTetromino(etat* e);
 void tetrominoSuivant(etat* e);
 void initEtat(etat* e);

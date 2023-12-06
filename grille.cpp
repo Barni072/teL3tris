@@ -252,6 +252,9 @@ void initEtat(etat* e){
 	}
 	e -> fermeture = false;
 	e -> descenteRapide = false;
+	for(int k = 0;k < 4;k++){
+		e -> lignesPleines[k] = -1;
+	}
 	e -> lignes = 0;
 	e -> score = 0;
 	e -> niveau = 0;	// DEVRAIT, PLUS TARD, ÊTRE ENTRÉ PAR L'UTILISATEUR
@@ -287,9 +290,9 @@ void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 }
 
 /* Vérifie si des lignes complétées existent dans la grille
- * Si oui, les enlève, incrémente le compteur de lignes, et n'incrémente pas encore le score...
- * GROS PROBLÈMES QUAND 2 LIGNES D'AFFILÉE SONT COMPLÉTÉES */
-void enleveLignes(etat* e){
+ * Si oui, les enlève et effectue toutes les incrémentations nécessaires (score, lignes, niveau, vitesse de descente)
+ * ANCIENNE VERSION, SANS ANIMATIONS À LA SUPPRESSION DES LIGNES (mais on la garde au cas où pour l'instant) */
+/*void enleveLignesOld(etat* e){
 	int nbLignes = 0;
 	bool plein;
 	for(int j = HAUT-1;j >= 0;j--){
@@ -336,6 +339,73 @@ void enleveLignes(etat* e){
 		changeVitesse(e);
 	}
 	return;
+}*/
+
+/* Remplit e->lignesPleines contenant par les ordonnées des lignes pleines, DANS L'ORDRE CROISSANT
+ * Ne vide pas ces lignes, et n'incrémente pas le compteur de lignes
+ * Il peut y avoir au maximum 4 lignes remplies à la fois, d'où la taille du tableau */
+void detecteLignes(etat* e){
+	int k = 0;
+	for(int j = 0;j < HAUT;j++){
+		bool plein = true;
+		// On vérifie si la j-ième ligne est pleine :
+		for(int i = 0;i < LARG;i++){
+			if(blocG(e,i,j) == VIDE){
+				plein = false;
+				break;
+			}
+		}
+		if(plein){
+			e -> lignesPleines[k] = j;
+			k += 1;
+		}
+	}
+	return;
+}
+
+/* Supprime de la grille les lignes indiquées dans e->lignesPleines (qui doivent y être PAR ORDONNÉES CROISSANTES)
+ * Effectue également les incrémentations nécessaires (score, lignes...), et réinitialise e->lignesPleines */
+void supprimeLignes(etat* e){
+	int nbLignes = 0;
+	for(int k = 0;k < 4;k++){
+		if(e->lignesPleines[k] != -1){	// Sinon, il n'y a pas de lignes à supprimmer
+			nbLignes += 1;
+			// On translate toutes les lignes supérieures vers le bas
+			for(int l = e->lignesPleines[k]-1;l >= 0;l--){
+				for(int i = 0;i < LARG;i++){
+					ecritBlocG(e,i,l+1,blocG(e,i,l));
+				}
+			}
+			// On remet bien des blocs VIDEs sur la ligne la plus haute :
+			for(int i = 0;i < LARG;i++){
+				ecritBlocG(e,i,0,VIDE);
+			}
+		}
+	}
+	e -> lignes += nbLignes;
+	// Réinitialise e->lignesPleines
+	for(int k = 0;k < 4;k++){
+		e -> lignesPleines[k] = -1;
+	}
+	switch(nbLignes){	// Incrémentation du score
+		case(1):
+			e -> score += 40*(e->niveau+1);
+			break;
+		case(2):
+			e -> score += 100*(e->niveau+1);
+			break;
+		case(3):
+			e -> score += 300*(e->niveau+1);
+			break;
+		case(4):
+			e -> score += 1200*(e->niveau+1);
+			break;
+	}
+	if(e->lignes >= 10*(e->niveau+1)){
+		e->niveau += 1;
+		changeVitesse(e);
+	}
+	return;
 }
 
 /* Place les blocs du tétromino courant dans e->g, et appelle le tétromino suivant */
@@ -346,7 +416,7 @@ void fixeTetromino(etat* e){
 			if(clr != VIDE) ecritBlocG(e,e->x + i,e->y + j,clr);
 		}
 	}
-	enleveLignes(e);
+	detecteLignes(e);
 	tetrominoSuivant(e);
 	return;
 }
