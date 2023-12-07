@@ -67,6 +67,9 @@ void couleurBloc(int clr){
 		case 8:		// GRIS, sert pour la réserve lorsqu'elle n'est pas utilisable, et éventuellement pour les blocs de "garbage" en 1v1
 			SDL_SetRenderDrawColor(rndr,64,64,64,255);
 			break;
+		case 9:		// BRILLE, sert pour l'animation de suppression des lignes
+			SDL_SetRenderDrawColor(rndr,200,200,200,255);
+			break;
 		default:	// Erreur, on affiche du blanc pour que ce soit visible...
 			SDL_SetRenderDrawColor(rndr,255,255,255,255);
 			break;
@@ -100,8 +103,9 @@ void dessineTetro(int idTetro,int offset_x,int offset_y,int rota,bool gris,bool 
 }
 
 /* Dessine la grille principale et tous ses blocs (ceux fixes et ceux appartenant au tétromino courant)
- * offset_x et offset_y représentent le décalage entre le bord de la grille et celui de la fenêtre, en pixels */
-void dessineGrillePrincipale(etat* e,int offset_x,int offset_y){
+ * offset_x et offset_y représentent le décalage entre le bord de la grille et celui de la fenêtre, en pixels
+ * Le tétromino courant et son fantôme sont affichés SSI tetroCourant est vrai */
+void dessineGrillePrincipale(etat* e,int offset_x,int offset_y,bool tetroCourant){
 	dessineGrille(offset_x,offset_y,LARG,HAUT,true);
 	// Affichage des blocs fixes :
 	for(int i = 0;i < LARG;i++){
@@ -119,11 +123,13 @@ void dessineGrillePrincipale(etat* e,int offset_x,int offset_y){
 			}
 		}
 	}
-	// Affichage du tétromino courant :
-	dessineTetro(e->idTetro,offset_x + (e->x)*TLBC,offset_y + (e->y)*TLBC,e->rota,false,false);
-	// Affichage du "fantôme" du tétromino courant :
-	int dy = offsetFantome(e);
-	dessineTetro(e->idTetro,offset_x + TLBC*(e->x),offset_y + TLBC*(e->y + dy),e->rota,false,true);
+	if(tetroCourant){
+		// Affichage du tétromino courant :
+		dessineTetro(e->idTetro,offset_x + (e->x)*TLBC,offset_y + (e->y)*TLBC,e->rota,false,false);
+		// Affichage du "fantôme" du tétromino courant :
+		int dy = offsetFantome(e);
+		dessineTetro(e->idTetro,offset_x + TLBC*(e->x),offset_y + TLBC*(e->y + dy),e->rota,false,true);
+	}
 	return;
 }
 
@@ -180,11 +186,12 @@ void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	return;
 }
 
-void affiche(etat* e){
+/* Le tétromino courant est affiché SSI tetroCourant est vrai */
+void affiche(etat* e,bool tetroCourant){
 	e -> affiche = false;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
 	SDL_RenderClear(rndr);
-	dessineGrillePrincipale(e,MARGE,MARGE);
+	dessineGrillePrincipale(e,MARGE,MARGE,tetroCourant);
 	dessineReserve(e,(LARG+1)*TLBC + MARGE,MARGE);
 	dessineLignesScore(e,(LARG+1)*TLBC + MARGE,5*TLBC + MARGE);
 	dessineSuivants(e,3,(LARG+1)*TLBC + MARGE,8*TLBC + MARGE);
@@ -198,7 +205,47 @@ void affiche(etat* e){
 	return;
 }
 
+/* Attente active de ms milisecondes
+ * (fonction auxiliaire de afficheAnimationLignes)
+ * (Pourrait être utilisée dans la fonction main...) */
+void attend(int ms){
+	int ticks = SDL_GetTicks();
+	while(SDL_GetTicks() < ticks + ms){ /* Attente active */ }
+	return;
+}
+
 void afficheAnimationLignes(etat* e){
-	affiche(e);	// Pour l'instant, c'est tout, il est l'heure de dormir
+	// Détection du nombre de lignes pleines
+	int nb = 4;
+	for(int k = 3;k >= 0;k--){
+		if(e->lignesPleines[k] == -1){
+			nb = k;
+		}
+	}
+	// Stockage des couleurs des blocs à faire clignoter :
+	int* tabCouleurs = new int[4*LARG];
+	for(int k = 0;k < nb;k++){
+		for(int i = 0;i < LARG;i++){
+			tabCouleurs[LARG*k+i] = blocG(e,i,e->lignesPleines[k]);
+		}
+	}
+	// Clignotement 2 fois :
+	for(int l = 0;l < 3;l++){
+		for(int k = 0;k < nb;k++){
+			for(int i = 0;i < LARG;i++){
+				ecritBlocG(e,i,e->lignesPleines[k],BRILLE);
+			}
+		}
+		affiche(e,false);
+		attend(120);
+		for(int k = 0;k < nb;k++){
+			for(int i = 0;i < LARG;i++){
+				ecritBlocG(e,i,e->lignesPleines[k],tabCouleurs[LARG*k+i]);
+			}
+		}
+		affiche(e,false);
+		attend(80);
+	}
+	delete[] tabCouleurs;
 	return;
 }

@@ -9,6 +9,7 @@ const int J = 5;
 const int Z = 6;
 const int L = 7;
 const int GRIS = 8;
+const int BRILLE = 9;
 const int VIDE = 0;		// Signifie : "Il n'y a rien ici"
 
 /* Contient les positions de départ des tétrominos

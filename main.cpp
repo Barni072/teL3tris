@@ -40,10 +40,11 @@ int main(){
 		}
 		appliqueCommandes(&e);
 		if(e.affiche){		// On ne veut recharger l'affichage que si c'est nécessaire
-			if(e.lignesPleines[0] == -1) affiche(&e);	// Cas où il n'y a pas de lignes pleines, on affiche le jeu normalement	
+			if(e.lignesPleines[0] == -1) affiche(&e,true);	// Cas où il n'y a pas de lignes pleines, on affiche le jeu normalement
 			else{	// Il y a des lignes pleines, on les fait clignoter puis on les enlève
 				afficheAnimationLignes(&e);
 				supprimeLignes(&e);
+				affiche(&e,true);
 			}
 		}
 		e.iDescente += 1;

@@ -9,6 +9,7 @@ extern const int J;
 extern const int Z;
 extern const int S;
 extern const int GRIS;
+extern const int BRILLE;
 extern const int VIDE;
 extern const int TETROMINOS[448];
 
