@@ -4,6 +4,7 @@
  
 extern SDL_Event evnt;
 
-void appliqueCommandes(etat* e);
+void appliqueCommandes1J(etat* e);
+void appliqueCommandes2J(etat* e1,etat* e2);
 
  #endif

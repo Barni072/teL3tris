@@ -2,10 +2,10 @@
 #include "entree.h"
 #include "grille.h"
  
- SDL_Event evnt;
+SDL_Event evnt;
  
 /* Doit être appelé à chaque itération de la boucle de jeu principale, vérifie les commandes et déclenche les actions associées */
-void appliqueCommandes(etat* e){
+void appliqueCommandes1J(etat* e){
 	if(SDL_PollEvent(&evnt)){
 		switch(evnt.type){
 				// Fermeture du jeu
@@ -32,11 +32,11 @@ void appliqueCommandes(etat* e){
 							// Descente immédiate
 							descenteImmediate(e);
 							break;
-						case(SDLK_a):	// A
+						case(SDLK_l):	// L
 							// Rotation directe
 							rotation(e,false);
 							break;
-						case(SDLK_e):	// E
+						case(SDLK_p):	// P
 							// Rotation indirecte
 							rotation(e,true);
 							break;
@@ -54,3 +54,85 @@ void appliqueCommandes(etat* e){
 	return;
 }
 // TODO : Refaire cette fonction avec des commandes non hardcodées, et implémenter une pause ?
+
+void appliqueCommandes2J(etat* e1,etat* e2){
+	if(SDL_PollEvent(&evnt)){
+		switch(evnt.type){
+				// Fermeture du jeu
+				case(SDL_QUIT):
+				case(SDL_WINDOWEVENT_CLOSE):
+					e1 -> fermeture = true;
+					e2 -> fermeture = true;
+					// C'est redondant, mais tant pis
+					break;
+				// Touche enfoncée
+				case(SDL_KEYDOWN):
+					switch(evnt.key.keysym.sym){
+						case(SDLK_q):	// Q
+							// Translation gauche e1
+							translation(e1,3);
+							break;
+						case(SDLK_d):	// D
+							// Translation droite e1
+							translation(e1,1);
+							break;
+						case(SDLK_s):	// S
+							// Descente rapide e1
+							descenteRapide(e1,true);
+							break;
+						case(SDLK_z):	// Z
+							// Descente immédiate e1
+							descenteImmediate(e1);
+							break;
+						case(SDLK_a):	// A
+							// Rotation directe e1
+							rotation(e1,false);
+							break;
+						case(SDLK_e):	// E
+							// Rotation indirecte e1
+							rotation(e1,true);
+							break;
+						case(SDLK_c):	// C
+							reserve(e1);
+							break;
+						
+						case(SDLK_j):	// J
+							// Translation gauche e2
+							translation(e2,3);
+							break;
+						case(SDLK_l):	// L
+							// Translation droite e2
+							translation(e2,1);
+							break;
+						case(SDLK_k):	// K
+							// Descente rapide e2
+							descenteRapide(e2,true);
+							break;
+						case(SDLK_i):	// I
+							// Descente immédiate e2
+							descenteImmediate(e2);
+							break;
+						case(SDLK_u):	// U
+							// Rotation directe e2
+							rotation(e2,false);
+							break;
+						case(SDLK_o):	// O
+							// Rotation indirecte e2
+							rotation(e2,true);
+							break;
+						case(SDLK_COLON):	// :
+							reserve(e2);
+							break;
+						
+						default:
+							break;
+					}		
+					break;
+			case(SDL_KEYUP):
+				// Fin de la descente rapide : 
+				if(evnt.key.keysym.sym == SDLK_s) descenteRapide(e1,false);
+				else if(evnt.key.keysym.sym == SDLK_k) descenteRapide(e2,false);
+			}
+	}
+	return;
+}

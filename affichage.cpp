@@ -10,7 +10,7 @@
 // Variables pour SDL
 SDL_Window* fenetre;
 SDL_Renderer* rndr;
- 
+
 const int TLBC = 30;	// Taille d'un bloc, en pixels (le texte est difficile à lire si cette taille est trop petite)
 const int MARGE = 8;	// Taille des marges entre les grilles et les bords de la fenêtre, en pixels
 
@@ -160,8 +160,8 @@ void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
 void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	dessineGrille(offset_x,offset_y,4,2,false);
 	TTF_Font* font = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
-	stringstream ssScr,ssNiv,ssLin;
-	/*ssScr << e -> score;
+	/*stringstream ssScr,ssNiv,ssLin;
+	ssScr << e -> score;
 	ssNiv << e -> niveau;
 	ssLin << e -> lignes;*/
 	SDL_Surface* txtScore = TTF_RenderText_Shaded(font,"Score : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
@@ -187,7 +187,7 @@ void dessineLignesScore(etat* e,int offset_x,int offset_y){
 }
 
 /* Le tétromino courant est affiché SSI tetroCourant est vrai */
-void affiche(etat* e,bool tetroCourant){
+void affiche(etat* e,bool tetroCourant,int offset_x){
 	e -> affiche = false;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
 	SDL_RenderClear(rndr);
@@ -215,7 +215,7 @@ void attend(int ms){
 }
 
 /* Animation de suppression des lignes pleines
- * (C'est un bricolage assez sordide) */
+ * (C'est un bricolage assez sordide, et incompatible avec le mode deux joueurs) */
 void afficheAnimationLignes(etat* e){
 	// Détection du nombre de lignes pleines
 	int nb = 4;
@@ -238,16 +238,34 @@ void afficheAnimationLignes(etat* e){
 				ecritBlocG(e,i,e->lignesPleines[k],BRILLE);
 			}
 		}
-		affiche(e,false);
+		affiche(e,false,0);
 		attend(90);
 		for(int k = 0;k < nb;k++){
 			for(int i = 0;i < LARG;i++){
 				ecritBlocG(e,i,e->lignesPleines[k],tabCouleurs[LARG*k+i]);
 			}
 		}
-		affiche(e,false);
+		affiche(e,false,0);
 		attend(60);
 	}
 	delete[] tabCouleurs;
+	return;
+}
+
+void affiche2J(etat* e1,etat* e2){
+	e1 -> affiche = false;
+	e2 -> affiche = false;
+	int offsetJ2 = TLBC * (LARG+6) + MARGE;
+	SDL_SetRenderDrawColor(rndr,0,0,0,0);
+	SDL_RenderClear(rndr);
+	dessineGrillePrincipale(e1,MARGE,MARGE,true);
+	dessineGrillePrincipale(e2,MARGE + offsetJ2,MARGE,true);
+	dessineReserve(e1,(LARG+1)*TLBC + MARGE,MARGE);
+	dessineReserve(e2,(LARG+1)*TLBC + MARGE + offsetJ2,MARGE);
+	dessineLignesScore(e1,(LARG+1)*TLBC + MARGE,5*TLBC + MARGE);
+	dessineLignesScore(e2,(LARG+1)*TLBC + MARGE + offsetJ2,5*TLBC + MARGE);
+	dessineSuivants(e1,3,(LARG+1)*TLBC + MARGE,8*TLBC + MARGE);
+	dessineSuivants(e2,3,(LARG+1)*TLBC + MARGE + offsetJ2,8*TLBC + MARGE);
+	SDL_RenderPresent(rndr);
 	return;
 }

@@ -14,7 +14,8 @@ extern const int MARGE;
 //void dessineReserve(etat* e,int offset_x,int offset_y);
 //void dessineSuivants(etat* e,int nb,int offset_x,int offset_y);
 //void dessineLignesScore(etat* e,int offset_x,int offset_y);
-void affiche(etat* e,bool tetroCourant);
+void affiche(etat* e,bool tetroCourant,int offset_x);
 void afficheAnimationLignes(etat* e);
+void affiche2J(etat* e1,etat* e2);
 
 #endif 
