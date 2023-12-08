@@ -4,6 +4,7 @@
 
 extern SDL_Window* fenetre;
 extern SDL_Renderer* rndr;
+extern TTF_Font* police;
 extern const int TLBC;
 extern const int MARGE;
 
@@ -14,7 +15,10 @@ extern const int MARGE;
 //void dessineReserve(etat* e,int offset_x,int offset_y);
 //void dessineSuivants(etat* e,int nb,int offset_x,int offset_y);
 //void dessineLignesScore(etat* e,int offset_x,int offset_y);
+//void dessineChiffre(int i,int offset_x,int offset_y);
+//void dessineNombre(int n,int nbChiffres,int offset_x,int offset_y);
 void affiche(etat* e,bool tetroCourant,int offset_x);
+//void attend(int ms);
 void afficheAnimationLignes(etat* e);
 void affiche2J(etat* e1,etat* e2);
 

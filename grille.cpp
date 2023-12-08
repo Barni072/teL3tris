@@ -200,7 +200,7 @@ bool translation(etat* e,int dir){
 /* Actions à effetcuer en fin de partie
  * Pour l'instant, ça consiste à demander la fermeture immédiate du programme
  * (la fermeture est brutale, mais propre : cette fonction ne ferme pas directement le programme,
- * et c'est la fonction main qui doit se charger de détruire toutes les structures utilisées) */
+ * et d'autres fonctions auront l'occasion de détruire toutes les structures utilisées) */
 void finPartie(etat* e){
 	e -> fermeture = true;
 	return;

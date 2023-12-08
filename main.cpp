@@ -9,6 +9,9 @@
 #include "entree.h"
 using namespace std;
 
+// Permettra de lire dans le fichier de configuration teL3tris.cfg :
+ifstream cfg;
+
 /* Initialise proprement les structures utilisées */
 void initialisation1J(etat* e){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -16,33 +19,40 @@ void initialisation1J(etat* e){
 	fenetre = SDL_CreateWindow("teL3tris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,(LARG+5)*TLBC + 2*MARGE,HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	srand(time(NULL));
+	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
+	if(police == NULL) cout << "ATTENTION ! Fichier de police de texte non trouvé, affichage des scores impossible..." << endl;
 	initEtat(e);
 	// Récupération du niveau initial dans le fichier de configuration :
-	ifstream cfg ("teL3tris.cfg");
 	cfg >> e -> niveau;
+	// Si l'utilisateur a entré n'importe quoi, il jouera au niveau 0
+	if(e->niveau > 20 || e->niveau < 0) e->niveau = 0;
 	changeVitesse(e);
-	//cout << "NIVEAU INITIAL : " << e->niveau << endl;		// DEBUG
-	cfg.close();
 	// Ici : initialisation des commandes ? (APRÈS celle de l'état !)
 	return;
 }
+
+/* Même fonction que la précédente, mais pour le mode 2 joueurs (donc avec 2 états) */
 void initialisation2J(etat* e1,etat* e2){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	TTF_Init();
 	// IL FAUT CHANGER LA TAILLE DE LA FENÊTRE :
 	fenetre = SDL_CreateWindow("teL3tris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,2*(LARG+5)*TLBC + 2*(MARGE+TLBC),HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
+	if(police == NULL) cout << "ATTENTION ! Fichier de police de texte non trouvé, affichage des scores impossible..." << endl;
 	srand(time(NULL));
 	initEtat(e1);
 	initEtat(e2);
-	// Récupération du niveau initial dans le fichier de configuration :
-	ifstream cfg ("teL3tris.cfg");
+	// Récupération des niveaux initiaux (pas forcément le même pour chaque joueur) dans le fichier de configuration :
 	cfg >> e1 -> niveau;
 	cfg >> e2 -> niveau;
+	// Si un utilisateur a entré n'importe quoi, il jouera au niveau 0
+	if(e1->niveau > 20 || e1->niveau < 0) e1->niveau = 0;
+	if(e2->niveau > 20 || e2->niveau < 0) e2->niveau = 0;
 	changeVitesse(e1);
 	changeVitesse(e2);
 	cfg.close();
-	// Ici : initialisation des commandes ? (APRÈS celle de l'état !)
+	// Ici : initialisation des commandes ? (APRÈS celle des états !)
 	return;
 }
 
@@ -50,14 +60,18 @@ void initialisation2J(etat* e1,etat* e2){
 void fermeture1J(etat* e){
 	SDL_DestroyWindow(fenetre);
 	SDL_DestroyRenderer(rndr);
+	TTF_CloseFont(police);
 	detruireEtat(e);
 	SDL_Quit();
 	TTF_Quit();
 	return;
 }
+
+/* Même fonction que la précédente, mais pour le mode 2 joueurs (donc avec 2 états) */
 void fermeture2J(etat* e1,etat* e2){
 	SDL_DestroyWindow(fenetre);
 	SDL_DestroyRenderer(rndr);
+	TTF_CloseFont(police);
 	detruireEtat(e1);
 	detruireEtat(e2);
 	SDL_Quit();
@@ -92,12 +106,13 @@ void jeuUnJoueur(){
 	return;
 } 
 
+/* PAS ENCORE UTILISABLE (DU TOUT) ! */
 void jeuDeuxJoueurs(){
 	etat e1,e2;
 	initialisation2J(&e1,&e2);
 	int ticks = SDL_GetTicks();
 	while(!(e1.fermeture || e2.fermeture)){
-		// IL FAUT RAJOUTER LA SUPPRESSION DES LIGNES !!! (sinon segfault)
+		// IL FAUT RAJOUTER LA SUPPRESSION DES LIGNES !!! (sinon segfault !)
 		if(e1.iDescente >= e1.delaiDescente || (e1.descenteRapide && e1.iDescente >= 25)){
 			// Descente rapide fixée (manuellement...) à la même vitesse que le niveau 20
 			descenteAuto(&e1);
@@ -123,7 +138,12 @@ void jeuDeuxJoueurs(){
 }
 
 int main(){
-	jeuUnJoueur();
-	//jeuDeuxJoueurs();
+	int joueurs = 1;
+	cfg.open("teL3tris.cfg");
+	cfg >> joueurs;
+	if(joueurs == 1) jeuUnJoueur();	// MODE UN JOUEUR (Cas par défaut si le fichier de configuration est absent)
+	else if(joueurs == 2)jeuDeuxJoueurs();	// MODE DEUX JOUEURS
+	// Sinon, l'utilsateur a mis n'importe quoi dans le fichier de configuration, et pour le punir le programme va se terminer
+	cfg.close();
 	return 0;
 }

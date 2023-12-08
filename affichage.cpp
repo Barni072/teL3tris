@@ -11,6 +11,9 @@
 SDL_Window* fenetre;
 SDL_Renderer* rndr;
 
+// Police d'affichage pour SDL_ttf
+TTF_Font* police;
+
 const int TLBC = 30;	// Taille d'un bloc, en pixels (le texte est difficile à lire si cette taille est trop petite)
 const int MARGE = 8;	// Taille des marges entre les grilles et les bords de la fenêtre, en pixels
 
@@ -155,34 +158,85 @@ void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
 	return;
 }
 
-/* Dessine une grille sans quadrillage, contenant le score et le nombre de lignes supprimmées par le joueur, sous forme de texte
- * Pour l'instant, seule la grille est présente... */
+/* Dessine le chiffre i (compris entre 0 et 9) à l'emplacement défini par les offsets */
+void dessineChiffre(int i,int offset_x,int offset_y){
+	SDL_Surface* txti;
+	switch(i){	// Cette abomination est nécessaire car SDL_RenderText_Shaded veut un texte constant en argument...
+		case(1):
+			txti = TTF_RenderText_Shaded(police,"1",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(2):
+			txti = TTF_RenderText_Shaded(police,"2",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(3):
+			txti = TTF_RenderText_Shaded(police,"3",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(4):
+			txti = TTF_RenderText_Shaded(police,"4",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(5):
+			txti = TTF_RenderText_Shaded(police,"5",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(6):
+			txti = TTF_RenderText_Shaded(police,"6",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(7):
+			txti = TTF_RenderText_Shaded(police,"7",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(8):
+			txti = TTF_RenderText_Shaded(police,"8",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		case(9):
+			txti = TTF_RenderText_Shaded(police,"9",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+		default:	// Si i n'est pas entre 1 et 9, on affiche un 0
+			txti = TTF_RenderText_Shaded(police,"0",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+			break;
+	}
+	SDL_Texture* texti = SDL_CreateTextureFromSurface(rndr,txti);
+	SDL_Rect srci{0,0,txti->w,txti->h};
+	SDL_Rect dsti{offset_x,offset_y,txti->w,txti->h};
+	SDL_RenderCopy(rndr,texti,&srci,&dsti);
+	SDL_DestroyTexture(texti);
+	SDL_FreeSurface(txti);
+	return;
+}
+
+/* Dessine l'entier les nbChiffres derniers chiffres de l'entier n, à la position définie par les offsets */
+void dessineNombre(int n,int nbChiffres,int offset_x,int offset_y){
+	for(int i = 0;i < nbChiffres;i++){
+		dessineChiffre(n%10,offset_x+((nbChiffres-i-1)*TLBC/4),offset_y);
+		n /= 10;
+	}
+	return;
+}
+
+/* Dessine une grille sans quadrillage, contenant le score et le nombre de lignes supprimmées par le joueur, sous forme de texte */
 void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	dessineGrille(offset_x,offset_y,4,2,false);
-	TTF_Font* font = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
-	/*stringstream ssScr,ssNiv,ssLin;
-	ssScr << e -> score;
-	ssNiv << e -> niveau;
-	ssLin << e -> lignes;*/
-	SDL_Surface* txtScore = TTF_RenderText_Shaded(font,"Score : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
-	SDL_Surface* txtNiveau = TTF_RenderText_Shaded(font,"Niveau : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
-	SDL_Surface* txtLignes = TTF_RenderText_Shaded(font,"Lignes : " /*+ ssLin.str()*/,SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
-	SDL_Texture* ttxtScore = SDL_CreateTextureFromSurface(rndr,txtScore);
-	SDL_Texture* ttxtNiveau = SDL_CreateTextureFromSurface(rndr,txtNiveau);
-	SDL_Texture* ttxtLignes = SDL_CreateTextureFromSurface(rndr,txtLignes);	
-	SDL_Rect srcScr{0,0,txtScore->w,txtScore->h};
-	SDL_Rect srcNiv{0,0,txtNiveau->w,txtNiveau->h};
-	SDL_Rect srcLin{0,0,txtLignes->w,txtLignes->h};
-	SDL_Rect dstScr{offset_x+3,offset_y+1,txtScore->w,txtScore->h};
-	SDL_Rect dstNiv{offset_x+3,offset_y+1+2*TLBC/3,txtLignes->w,txtLignes->h};
-	SDL_Rect dstLin{offset_x+3,offset_y+1+4*TLBC/3,txtLignes->w,txtLignes->h};
-	SDL_RenderCopy(rndr,ttxtScore,&srcScr,&dstScr);
-	SDL_RenderCopy(rndr,ttxtNiveau,&srcNiv,&dstNiv);
-	SDL_RenderCopy(rndr,ttxtLignes,&srcLin,&dstLin);
-	SDL_FreeSurface(txtScore);
-	SDL_FreeSurface(txtNiveau);
-	SDL_FreeSurface(txtLignes);
-	TTF_CloseFont(font);
+	if(police != NULL){		// On ne veut pas essayer d'écrire si l'ouverture de la police d'écriture a échoué
+		SDL_Surface* txtScore = TTF_RenderText_Shaded(police,"Score : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+		SDL_Surface* txtNiveau = TTF_RenderText_Shaded(police,"Niveau : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+		SDL_Surface* txtLignes = TTF_RenderText_Shaded(police,"Lignes : ",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
+		SDL_Texture* ttxtScore = SDL_CreateTextureFromSurface(rndr,txtScore);
+		SDL_Texture* ttxtNiveau = SDL_CreateTextureFromSurface(rndr,txtNiveau);
+		SDL_Texture* ttxtLignes = SDL_CreateTextureFromSurface(rndr,txtLignes);	
+		SDL_Rect srcScr{0,0,txtScore->w,txtScore->h};
+		SDL_Rect srcNiv{0,0,txtNiveau->w,txtNiveau->h};
+		SDL_Rect srcLin{0,0,txtLignes->w,txtLignes->h};
+		SDL_Rect dstScr{offset_x+3,offset_y+1,txtScore->w,txtScore->h};
+		SDL_Rect dstNiv{offset_x+3,offset_y+1+2*TLBC/3,txtLignes->w,txtLignes->h};
+		SDL_Rect dstLin{offset_x+3,offset_y+1+4*TLBC/3,txtLignes->w,txtLignes->h};
+		SDL_RenderCopy(rndr,ttxtScore,&srcScr,&dstScr);
+		SDL_RenderCopy(rndr,ttxtNiveau,&srcNiv,&dstNiv);
+		SDL_RenderCopy(rndr,ttxtLignes,&srcLin,&dstLin);
+		dessineNombre(e->score,6,offset_x+txtScore->w + TLBC/6,offset_y+1);
+		dessineNombre(e->niveau,2,offset_x+txtNiveau->w + TLBC/6,offset_y+1+2*TLBC/3);
+		dessineNombre(e->lignes,3,offset_x+txtLignes->w + TLBC/6,offset_y+1+4*TLBC/3);
+		SDL_FreeSurface(txtScore);
+		SDL_FreeSurface(txtNiveau);
+		SDL_FreeSurface(txtLignes);
+	}
 	return;
 }
 
@@ -196,18 +250,12 @@ void affiche(etat* e,bool tetroCourant,int offset_x){
 	dessineLignesScore(e,(LARG+1)*TLBC + MARGE,5*TLBC + MARGE);
 	dessineSuivants(e,3,(LARG+1)*TLBC + MARGE,8*TLBC + MARGE);
 	SDL_RenderPresent(rndr);	// NE SEMBLE TOUJOURS PAS FONCTIONNER SOUS X11
-	
-	// DEBUG :	// Semble OK, mais je les laisse pour l'instant, tant que le vrai affichage n'est pas fonctionnel...
-	/*cout << "SCORE : " << e -> score << endl;
-	cout << "NIVEAU : " << e-> niveau << endl;
-	cout << "LIGNES : " << e -> lignes << endl;
-	cout << endl;*/
 	return;
 }
 
 /* Attente active de ms milisecondes
  * (fonction auxiliaire de afficheAnimationLignes)
- * (Pourrait être utilisée dans la fonction main...) */
+ * (Pourrait être utilisée dans la fonction main, mais on perdrait alors peut-être légèrement en précision) */
 void attend(int ms){
 	int ticks = SDL_GetTicks();
 	while(SDL_GetTicks() < ticks + ms){ /* Attente active */ }
