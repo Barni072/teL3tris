@@ -214,6 +214,8 @@ void attend(int ms){
 	return;
 }
 
+/* Animation de suppression des lignes pleines
+ * (C'est un bricolage assez sordide) */
 void afficheAnimationLignes(etat* e){
 	// Détection du nombre de lignes pleines
 	int nb = 4;
@@ -229,7 +231,7 @@ void afficheAnimationLignes(etat* e){
 			tabCouleurs[LARG*k+i] = blocG(e,i,e->lignesPleines[k]);
 		}
 	}
-	// Clignotement 2 fois :
+	// Clignotement 3 fois :
 	for(int l = 0;l < 3;l++){
 		for(int k = 0;k < nb;k++){
 			for(int i = 0;i < LARG;i++){
@@ -237,14 +239,14 @@ void afficheAnimationLignes(etat* e){
 			}
 		}
 		affiche(e,false);
-		attend(120);
+		attend(90);
 		for(int k = 0;k < nb;k++){
 			for(int i = 0;i < LARG;i++){
 				ecritBlocG(e,i,e->lignesPleines[k],tabCouleurs[LARG*k+i]);
 			}
 		}
 		affiche(e,false);
-		attend(80);
+		attend(60);
 	}
 	delete[] tabCouleurs;
 	return;

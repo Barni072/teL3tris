@@ -47,6 +47,6 @@ void rotation(etat* e,bool sens);
 void descenteRapide(etat* e,bool rapide);
 int offsetFantome(etat* e);
 //void finPartie(etat* e);
-//void changeVitesse(etat* e);
+void changeVitesse(etat* e);
 
 #endif

@@ -2,6 +2,9 @@
 #include "grille.h"
 #include "tetrominos.h"
 
+#include <iostream>
+using namespace std;
+
 // Taille de la grille de jeu, en blocs
 const int LARG = 10;
 const int HAUT = 20;
@@ -257,8 +260,8 @@ void initEtat(etat* e){
 	}
 	e -> lignes = 0;
 	e -> score = 0;
-	e -> niveau = 0;	// DEVRAIT, PLUS TARD, ÊTRE ENTRÉ PAR L'UTILISATEUR
-	changeVitesse(e);
+	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
+	changeVitesse(e);	// Idem
 	// Génère les 14 premiers tétrominos :
 	prochainSac(e);
 	prochainSac(e);
