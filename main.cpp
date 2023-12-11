@@ -85,7 +85,6 @@ void jeuUnJoueur(){
 	int ticks = SDL_GetTicks();
 	while(!(e.fermeture)){
 		if(e.iDescente >= e.delaiDescente || (e.descenteRapide && e.iDescente >= 25)){
-			// Descente rapide fixée (manuellement...) à la même vitesse que le niveau 20
 			descenteAuto(&e);
 			e.iDescente = 0;
 		}
@@ -94,7 +93,7 @@ void jeuUnJoueur(){
 			if(e.lignesPleines[0] == -1) affiche(&e,true,0);	// Cas où il n'y a pas de lignes pleines : on affiche le jeu normalement
 			else{	// Il y a des lignes pleines : on les fait clignoter puis on les enlève
 				afficheAnimationLignes(&e);
-				supprimeLignes(&e);
+				supprimeLignes1J(&e);
 				affiche(&e,true,0);
 			}
 		}
@@ -102,6 +101,10 @@ void jeuUnJoueur(){
 		while(SDL_GetTicks() < ticks + 2){ /* Attente active, 2ms (500Hz) */ }
 		ticks = SDL_GetTicks();	
 	}
+	// Affichage des résultats du joueur dans le terminal
+	cout << "SCORE : " << e.score << endl;
+	cout << "LIGNES : " << e.lignes << endl;
+	cout << "NIVEAU : " << e.niveau << endl;
 	fermeture1J(&e);
 	return;
 } 
@@ -111,19 +114,21 @@ void jeuDeuxJoueurs(){
 	etat e1,e2;
 	initialisation2J(&e1,&e2);
 	int ticks = SDL_GetTicks();
-	while(!(e1.fermeture || e2.fermeture)){
-		// IL FAUT RAJOUTER LA SUPPRESSION DES LIGNES !!! (sinon segfault !)
+	while(!(e1.fermeture && e2.fermeture)){
 		if(e1.iDescente >= e1.delaiDescente || (e1.descenteRapide && e1.iDescente >= 25)){
-			// Descente rapide fixée (manuellement...) à la même vitesse que le niveau 20
 			descenteAuto(&e1);
 			e1.iDescente = 0;
 		}
 		if(e2.iDescente >= e2.delaiDescente || (e2.descenteRapide && e2.iDescente >= 25)){
-			// Descente rapide fixée (manuellement...) à la même vitesse que le niveau 20
 			descenteAuto(&e2);
 			e2.iDescente = 0;
 		}
+		if(e1.lignesPleines[0] != -1) supprimeLignes2J(&e1,&e2);
+		if(e2.lignesPleines[0] != -1) supprimeLignes2J(&e2,&e1);
 		appliqueCommandes2J(&e1,&e2);
+		// Si un joueur a perdu, il patiente devant un "écran de fin"
+		if(e1.fermeture) grillePerdant(&e1);
+		if(e2.fermeture) grillePerdant(&e2);
 		// TODO : animation de suppression des lignes en mode 2 joueurs
 		if(e1.affiche || e2.affiche){
 			affiche2J(&e1,&e2);
@@ -143,7 +148,7 @@ int main(){
 	cfg >> joueurs;
 	if(joueurs == 1) jeuUnJoueur();	// MODE UN JOUEUR (Cas par défaut si le fichier de configuration est absent)
 	else if(joueurs == 2)jeuDeuxJoueurs();	// MODE DEUX JOUEURS
-	// Sinon, l'utilsateur a mis n'importe quoi dans le fichier de configuration, et pour le punir le programme va se terminer
+	// Sinon, l'utilsateur a mis n'importe quoi dans le fichier de configuration, et il ne se passe rien
 	cfg.close();
 	return 0;
 }

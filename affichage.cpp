@@ -86,19 +86,21 @@ void couleurBloc(int clr){
  * Le booléen "gris" force l'affichage du tétromino en gris
  * Si le booléen "creux" est vrai, seuls les contours des blocs du tétromino seront affichés */
 void dessineTetro(int idTetro,int offset_x,int offset_y,int rota,bool gris,bool creux){
-	for(int i = 0;i < 4;i++){
-		for(int j = 0;j < 4;j++){
-			int clr = blocT(tetro(idTetro,rota),i,j);
-			if(clr != VIDE){
-				if(gris) clr = GRIS;	// Hack fumeux pour griser la réserve lorsqu'elle n'est pas utilisable
-				SDL_Rect rect;
-				rect.x = offset_x+1 + i*TLBC;
-				rect.y = offset_y+1 + j*TLBC;
-				rect.w = TLBC-1;
-				rect.h = TLBC-1;
-				couleurBloc(clr);
-				if(!creux) SDL_RenderFillRect(rndr,&rect);
-				else SDL_RenderDrawRect(rndr,&rect);
+	if(idTetro != VIDE){		// Sinon, il n'y a rien à faire
+		for(int i = 0;i < 4;i++){
+			for(int j = 0;j < 4;j++){
+				int clr = blocT(tetro(idTetro,rota),i,j);
+				if(clr != VIDE){
+					if(gris) clr = GRIS;	// Hack fumeux pour griser la réserve lorsqu'elle n'est pas utilisable
+					SDL_Rect rect;
+					rect.x = offset_x+1 + i*TLBC;
+					rect.y = offset_y+1 + j*TLBC;
+					rect.w = TLBC-1;
+					rect.h = TLBC-1;
+					couleurBloc(clr);
+					if(!creux) SDL_RenderFillRect(rndr,&rect);
+					else SDL_RenderDrawRect(rndr,&rect);
+				}
 			}
 		}
 	}
@@ -144,6 +146,7 @@ void dessineReserve(etat* e,int offset_x,int offset_y){
 	}
 	return;
 }
+
 /* Dessine une grille contenant les nb premiers tétrominos suivants (avec les offsets habituels)
  * Peut en théorie afficher 7 tétrominos, en pratique ça prendrait trop de place */
 void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
@@ -161,7 +164,7 @@ void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
 /* Dessine le chiffre i (compris entre 0 et 9) à l'emplacement défini par les offsets */
 void dessineChiffre(int i,int offset_x,int offset_y){
 	SDL_Surface* txti;
-	switch(i){	// Cette abomination est nécessaire car SDL_RenderText_Shaded veut un texte constant en argument...
+	switch(i){	// Cette indigne abomination est nécessaire car SDL_RenderText_Shaded veut absolument un texte constant en argument...
 		case(1):
 			txti = TTF_RenderText_Shaded(police,"1",SDL_Color{255,255,255,0},SDL_Color{0,0,0,0});
 			break;
@@ -301,11 +304,11 @@ void afficheAnimationLignes(etat* e){
 }
 
 void affiche2J(etat* e1,etat* e2){
-	e1 -> affiche = false;
-	e2 -> affiche = false;
 	int offsetJ2 = TLBC * (LARG+6) + MARGE;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
 	SDL_RenderClear(rndr);
+	e1 -> affiche = false;
+	e2 -> affiche = false;
 	dessineGrillePrincipale(e1,MARGE,MARGE,true);
 	dessineGrillePrincipale(e2,MARGE + offsetJ2,MARGE,true);
 	dessineReserve(e1,(LARG+1)*TLBC + MARGE,MARGE);

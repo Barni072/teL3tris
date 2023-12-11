@@ -22,6 +22,7 @@ struct s_etat{
 	int niveau;		// Augmente avec le nombre de lignes, devrait pouvoir être sélectionné par l'utilisateur
 	int score;		// Calculé à peu près comme dans la version GB, en rajoutant un bonus d'un point par case en descente rapide, et de 2 points par case en descente immédiate
 	int lignesPleines[4];	// Contient les ordonnées des éventuelles lignes pleines, ou des -1 s'il n'y a pas assez de lignes pleines, sert à déclencher l'animation de suppression des lignes
+	int attaquesRecues;		// Nombre de lignes d'attaques qui seront rajoutées en bas de la grille de jeu avec l'arrivée du tétromino suivant (évidemment toujours 0 en mode 1 joueur)
 };
 typedef s_etat etat;
 
@@ -31,7 +32,8 @@ void ecritBlocG(etat* e,int i,int j,int clr);
 void prochainSac(etat* e);
 //void enleveLignesOld(etat* e);	// ANCIENNE VERSION, SERA À ENLEVER
 //void detecteLignes(etat* e);
-void supprimeLignes(etat* e);
+void supprimeLignes1J(etat* e);
+void supprimeLignes2J(etat* e,etat* adv);
 //void placeTetromino(etat* e);
 void tetrominoSuivant(etat* e);
 void initEtat(etat* e);
@@ -39,6 +41,7 @@ void detruireEtat(etat* e);
 void reserve(etat* e);
 //bool collision(etat* e,int dx,int dy,int drot);
 bool translation(etat*e,int dir);
+//void recoitAttaques(etat* e);
 void fixeTetromino(etat* e);
 void descenteAuto(etat* e);
 void descenteImmediate(etat* e);
@@ -48,5 +51,6 @@ void descenteRapide(etat* e,bool rapide);
 int offsetFantome(etat* e);
 //void finPartie(etat* e);
 void changeVitesse(etat* e);
+void grillePerdant(etat* e);
 
 #endif

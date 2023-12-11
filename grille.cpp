@@ -197,10 +197,8 @@ bool translation(etat* e,int dir){
 	return false;
 }
 
-/* Actions à effetcuer en fin de partie
- * Pour l'instant, ça consiste à demander la fermeture immédiate du programme
- * (la fermeture est brutale, mais propre : cette fonction ne ferme pas directement le programme,
- * et d'autres fonctions auront l'occasion de détruire toutes les structures utilisées) */
+/* Change e->fermeture pour déclencher la fin du programme
+ * (Ne s'occupe pas de détruire proprement les structures utilisées, mais d'autres fonctions auront l'occasion de le faire */
 void finPartie(etat* e){
 	e -> fermeture = true;
 	return;
@@ -230,7 +228,7 @@ void placeTetromino(etat* e){
 
 /* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
  * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
-void tetrominoSuivant(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
+void tetrominoSuivant(etat* e){
 	e -> idTetro = e -> suivants[0];
 	int i = 0;
 	while(i < 13 && e -> suivants[i] != VIDE){
@@ -258,6 +256,7 @@ void initEtat(etat* e){
 	for(int k = 0;k < 4;k++){
 		e -> lignesPleines[k] = -1;
 	}
+	e -> attaquesRecues = 0;
 	e -> lignes = 0;
 	e -> score = 0;
 	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
@@ -345,7 +344,7 @@ void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
 }*/
 
 /* Remplit e->lignesPleines contenant par les ordonnées des lignes pleines, DANS L'ORDRE CROISSANT
- * Ne vide pas ces lignes, et n'incrémente pas le compteur de lignes
+ * Ne vide pas ces lignes, et n'incrémente pas le compteur de lignes (UTILISER SUPPRIMELIGNES POUR ÇA)
  * Il peut y avoir au maximum 4 lignes remplies à la fois, d'où la taille du tableau */
 void detecteLignes(etat* e){
 	int k = 0;
@@ -368,7 +367,7 @@ void detecteLignes(etat* e){
 
 /* Supprime de la grille les lignes indiquées dans e->lignesPleines (qui doivent y être PAR ORDONNÉES CROISSANTES)
  * Effectue également les incrémentations nécessaires (score, lignes...), et réinitialise e->lignesPleines */
-void supprimeLignes(etat* e){
+void supprimeLignes1J(etat* e){
 	int nbLignes = 0;
 	for(int k = 0;k < 4;k++){
 		if(e->lignesPleines[k] != -1){	// Sinon, il n'y a pas de lignes à supprimmer
@@ -411,7 +410,84 @@ void supprimeLignes(etat* e){
 	return;
 }
 
-/* Place les blocs du tétromino courant dans e->g, et appelle le tétromino suivant */
+/* Même fonction que la supprimeLignes1J, mais adaptée au mode 2 joueurs :
+ * Effectue la suppression des lignes pour le joueur e (exactement comme en mode 1 joueur), et déclenche l'envoi d'attaques au joueur adv */
+void supprimeLignes2J(etat* e,etat* adv){
+	int nbLignes = 0;
+	for(int k = 0;k < 4;k++){
+		if(e->lignesPleines[k] != -1){	// Sinon, il n'y a pas de lignes à supprimmer
+			nbLignes += 1;
+			// On translate toutes les lignes supérieures vers le bas
+			for(int l = e->lignesPleines[k]-1;l >= 0;l--){
+				for(int i = 0;i < LARG;i++){
+					ecritBlocG(e,i,l+1,blocG(e,i,l));
+				}
+			}
+			// On remet bien des blocs VIDEs sur la ligne la plus haute :
+			for(int i = 0;i < LARG;i++){
+				ecritBlocG(e,i,0,VIDE);
+			}
+		}
+	}
+	e -> lignes += nbLignes;
+	// Réinitialise e->lignesPleines
+	for(int k = 0;k < 4;k++){
+		e -> lignesPleines[k] = -1;
+	}
+	switch(nbLignes){	// Incrémentation du score et envoi des attaques à l'adversaire
+		case(1):
+			e -> score += 40*(e->niveau+1);
+			// Pas d'attaque
+			break;
+		case(2):
+			e -> score += 100*(e->niveau+1);
+			adv -> attaquesRecues += 1;
+			break;
+		case(3):
+			e -> score += 300*(e->niveau+1);
+			adv -> attaquesRecues += 2;
+			break;
+		case(4):
+			e -> score += 1200*(e->niveau+1);
+			adv -> attaquesRecues += 4;
+			break;
+	}
+	if(e->lignes >= 10*(e->niveau+1)){
+		e->niveau += 1;
+		changeVitesse(e);
+	}
+	return;
+}
+
+/* Rajoute en bas de la grille de jeu le nombre de lignes d'attaques contenu dans e->attaquesRecues
+ * (En mode 1 joueur, e->attaquesRecues vaut 0 et ceci n'a aucun effet)
+ * S'il n'y a pas la place, le joueur a perdu (mais n'aura pas le temps de voir/comprendre pourquoi...) */
+void recoitAttaques(etat* e){
+	// Décide de l'emplacement du "trou" dans les lignes d'attaque :
+	int trou = rand()%LARG;
+	// Monte les blocs déjà présents :
+	for(int i = 0;i < LARG;i++){
+		for(int j = HAUT-1;j >= 0;j--){
+			if(blocG(e,i,j) != VIDE && j-(e->attaquesRecues) < 0){	// Sinon, un bloc non vide serait translaté en dehors de la grille, et on ne peut pas faire ça (le joueur a donc perdu)
+				ecritBlocG(e,i,j-(e->attaquesRecues),blocG(e,i,j));
+			}else{
+				e -> fermeture = true;
+			}
+		}
+	}
+	// Rajoute les nouvelles lignes en bas de la grille :
+	for(int i = 0;i < LARG;i++){
+		if(i != trou){
+			for(int k = 1;k <= e->attaquesRecues;k++){
+				ecritBlocG(e,i,HAUT-k,GRIS);
+			}
+		}
+	}
+	return;
+}
+
+/* Place les blocs du tétromino courant dans e->g, et appelle le tétromino suivant
+ * Appelle indirectement la détection des lignes pleines, mais ne cherche pas à les enlever */
 void fixeTetromino(etat* e){
 	for(int i = 0;i < 4;i++){
 		for(int j = 0;j < 4;j++){
@@ -420,12 +496,14 @@ void fixeTetromino(etat* e){
 		}
 	}
 	detecteLignes(e);
+	//recoitAttaques(e);	// GROS BUG, apparamment
 	tetrominoSuivant(e);
 	return;
 }
 
-/* Descente automatique du tetromino courant
- * Ne gère pas le timing, donc doit être appelée "au bon moment" */
+/* Descente automatique du tetromino courant, et incrémente le score en descente rapide
+ * Ne gère pas le timing, donc doit être appelée "au bon moment"
+ * Fixe le tétromino s'il ne peut pas descendre (donc déclenche indirectement l'appel du tétromino suivant et la détection des lignes pleines) */
 void descenteAuto(etat* e){
 	if(!translation(e,2)){
 		fixeTetromino(e);
@@ -436,7 +514,7 @@ void descenteAuto(etat* e){
 	return;
 }
 
-/* Descend le tétromino courant autant que possible immédiatement, et passe au suivant */
+/* Descend le tétromino courant autant que possible immédiatement, donne quelques points, et passe au suivant */
 void descenteImmediate(etat* e){
 	e -> iDescente = 0;	// Sinon, le tétromino suivant ferait sa première descente plus tôt que prévu
 	while(translation(e,2)) e->score += 2;	// On augmente le score de 2 points par bloc descendu
@@ -462,7 +540,6 @@ void rotation(etat* e,bool sens){
 	int drot;
 	if(sens) drot = 1;
 	else drot = 3;
-	// OU BIEN : int drot = 3 - (2 * sens);	?	(Alternative à tester...)
 	if(collision(e,0,0,drot)){
 		appliqueRotation(e,0,0,sens);
 	}else if(collision(e,1,0,drot)){	// Wallkick vers la droite
@@ -500,4 +577,21 @@ int offsetFantome(etat* e){
 		i += 1;
 	}
 	return i-1;
+}
+
+/* Remplit la grille de jeu avec un motif douteux à damiers, pour signifier que le joueur a fini
+ * (Seulement utile/visible en mode deux joueurs) */
+void grillePerdant(etat* e){
+	for(int i = 0;i < LARG;i++){
+		for(int j = 0;j < HAUT;j++){
+			if((i+j)%2 == 0) ecritBlocG(e,i,j,BRILLE);
+			else ecritBlocG(e,i,j,VIDE);
+		}
+	}
+	e -> idTetro = VIDE;
+	e -> reserve = VIDE;
+	for(int i = 0;i < 14;i++){
+		e -> suivants[i] = VIDE;
+	}
+	return;
 }

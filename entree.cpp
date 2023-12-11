@@ -84,15 +84,15 @@ void appliqueCommandes2J(etat* e1,etat* e2){
 							// Descente immédiate e1
 							descenteImmediate(e1);
 							break;
-						case(SDLK_a):	// A
+						case(SDLK_c):	// C
 							// Rotation directe e1
 							rotation(e1,false);
 							break;
-						case(SDLK_e):	// E
+						case(SDLK_f):	// F
 							// Rotation indirecte e1
 							rotation(e1,true);
 							break;
-						case(SDLK_c):	// C
+						case(SDLK_x):	// X
 							reserve(e1);
 							break;
 						
@@ -112,15 +112,15 @@ void appliqueCommandes2J(etat* e1,etat* e2){
 							// Descente immédiate e2
 							descenteImmediate(e2);
 							break;
-						case(SDLK_u):	// U
+						case(SDLK_COLON):	// ':'
 							// Rotation directe e2
 							rotation(e2,false);
 							break;
-						case(SDLK_o):	// O
+						case(SDLK_m):	// M
 							// Rotation indirecte e2
 							rotation(e2,true);
 							break;
-						case(SDLK_COLON):	// :
+						case(SDLK_SEMICOLON):	// ';'
 							reserve(e2);
 							break;
 						
