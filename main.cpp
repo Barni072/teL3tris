@@ -35,7 +35,6 @@ void initialisation1J(etat* e){
 void initialisation2J(etat* e1,etat* e2){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	TTF_Init();
-	// IL FAUT CHANGER LA TAILLE DE LA FENÊTRE :
 	fenetre = SDL_CreateWindow("teL3tris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,2*(LARG+5)*TLBC + 2*(MARGE+TLBC),HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
@@ -109,7 +108,7 @@ void jeuUnJoueur(){
 	return;
 } 
 
-/* PAS ENCORE UTILISABLE (DU TOUT) ! */
+/* Encore incomplet */
 void jeuDeuxJoueurs(){
 	etat e1,e2;
 	initialisation2J(&e1,&e2);
@@ -138,6 +137,7 @@ void jeuDeuxJoueurs(){
 		while(SDL_GetTicks() < ticks + 2){ /* Attente active, 2ms (500Hz) */ }
 		ticks = SDL_GetTicks();
 	}
+	// TODO : Afficher les scores/le gagnant dans le terminal en fin de partie
 	fermeture2J(&e1,&e2);
 	return;
 }

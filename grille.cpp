@@ -472,14 +472,16 @@ void supprimeLignes2J(etat* e,etat* adv){
 
 /* Rajoute en bas de la grille de jeu le nombre de lignes d'attaques contenu dans e->attaquesRecues
  * (En mode 1 joueur, e->attaquesRecues vaut 0 et ceci n'a aucun effet)
- * S'il n'y a pas la place, le joueur a perdu (mais n'aura pas le temps de voir/comprendre pourquoi...) */
+ * S'il n'y a pas la place, le joueur a perdu (mais n'aura pas le temps de voir/comprendre pourquoi...)
+ * (En pratique, cette fonction fait n'importe quoi) */
 void recoitAttaques(etat* e){
 	// Décide de l'emplacement du "trou" dans les lignes d'attaque :
 	int trou = rand()%LARG;
+	//cout << e -> attaquesRecues << endl << trou << endl << endl;	// DEBUG
 	// Monte les blocs déjà présents :
 	for(int i = 0;i < LARG;i++){
 		for(int j = HAUT-1;j >= 0;j--){
-			if(blocG(e,i,j) != VIDE && j-(e->attaquesRecues) < 0){	// Sinon, un bloc non vide serait translaté en dehors de la grille, et on ne peut pas faire ça (le joueur a donc perdu)
+			if(!(blocG(e,i,j) != VIDE && j-(e->attaquesRecues) < 0)){	// Sinon, un bloc non vide serait translaté en dehors de la grille, et on ne peut pas faire ça (le joueur a donc perdu)
 				ecritBlocG(e,i,j-(e->attaquesRecues),blocG(e,i,j));
 			}else{
 				e -> fermeture = true;
@@ -494,6 +496,7 @@ void recoitAttaques(etat* e){
 			}
 		}
 	}
+	e -> attaquesRecues = 0;
 	return;
 }
 
@@ -524,7 +527,7 @@ void fixeTetromino(etat* e){
 		}
 	}
 	detecteLignes(e);
-	//recoitAttaques(e);	// SEGFAULT, à mieux tester...
+	//if(e->attaquesRecues != 0) recoitAttaques(e);		// OULÀLÀ
 	tetrominoSuivant(e);
 	return;
 }

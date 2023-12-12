@@ -30,7 +30,6 @@ int blocG(etat* e,int i,int j);
 void ecritBlocG(etat* e,int i,int j,int clr);
 //void permute(int* t,int i,int j);
 void prochainSac(etat* e);
-//void enleveLignesOld(etat* e);	// ANCIENNE VERSION, SERA À ENLEVER
 //void detecteLignes(etat* e);
 void supprimeLignes1J(etat* e);
 void supprimeLignes2J(etat* e,etat* adv);
