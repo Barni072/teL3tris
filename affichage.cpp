@@ -67,7 +67,7 @@ void couleurBloc(int clr){
 		case 7:		// L, orange
 			SDL_SetRenderDrawColor(rndr,250,70,25,255);
 			break;
-		case 8:		// GRIS, sert pour la réserve lorsqu'elle n'est pas utilisable, et éventuellement pour les blocs de "garbage" en 1v1
+		case 8:		// GRIS, sert pour la réserve lorsqu'elle n'est pas utilisable, et pour les blocs d'attaque en mode 2 joueurs
 			SDL_SetRenderDrawColor(rndr,64,64,64,255);
 			break;
 		case 9:		// BRILLE, sert pour l'animation de suppression des lignes
@@ -81,8 +81,8 @@ void couleurBloc(int clr){
 
 /* Dessine "en vrac" le tétromino d'indice idTetro, à offset_x+1 pixels du bord gauche de la fenêtre,
  * et offset_y+1 pixels du bord haut de la fenêtre, sans mettre tout seul de grille autour
- * rota correspond au nombre de rotations effectuées par le tétromino
  * (Les "+1" servent à ne pas chevaucher le quadrillage) 
+ * rota correspond au nombre de rotations horaires horaires effectuées par le tétromino
  * Le booléen "gris" force l'affichage du tétromino en gris
  * Si le booléen "creux" est vrai, seuls les contours des blocs du tétromino seront affichés */
 void dessineTetro(int idTetro,int offset_x,int offset_y,int rota,bool gris,bool creux){
@@ -91,7 +91,7 @@ void dessineTetro(int idTetro,int offset_x,int offset_y,int rota,bool gris,bool 
 			for(int j = 0;j < 4;j++){
 				int clr = blocT(tetro(idTetro,rota),i,j);
 				if(clr != VIDE){
-					if(gris) clr = GRIS;	// Hack fumeux pour griser la réserve lorsqu'elle n'est pas utilisable
+					if(gris) clr = GRIS;	// Force l'affichage en gris si c'est demandé (sert pour la réserve lorsqu'elle n'est pas utilisable)
 					SDL_Rect rect;
 					rect.x = offset_x+1 + i*TLBC;
 					rect.y = offset_y+1 + j*TLBC;
@@ -123,7 +123,6 @@ void dessineGrillePrincipale(etat* e,int offset_x,int offset_y,bool tetroCourant
 				rect.w = TLBC-1;
 				rect.h = TLBC-1;
 				couleurBloc(clr);
-				//SDL_SetRenderDrawColor(rndr,0,255,0,255);	// 1ÈRE VERSION, tous les blocs sont verts
 				SDL_RenderFillRect(rndr,&rect);
 			}
 		}
@@ -148,7 +147,7 @@ void dessineReserve(etat* e,int offset_x,int offset_y){
 }
 
 /* Dessine une grille contenant les nb premiers tétrominos suivants (avec les offsets habituels)
- * Peut en théorie afficher 7 tétrominos, en pratique ça prendrait trop de place */
+ * Peut en théorie afficher 7 jusqu'à tétrominos, en pratique ça prendrait trop de place dans l'affichage */
 void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
 	dessineGrille(offset_x,offset_y,4,nb*4,true);
 	for(int k = 1;k < nb;k++){	// Affichage d'une "ligne plus blanche" entre les emplacements des différents tétrominos
@@ -205,7 +204,7 @@ void dessineChiffre(int i,int offset_x,int offset_y){
 	return;
 }
 
-/* Dessine l'entier les nbChiffres derniers chiffres de l'entier n, à la position définie par les offsets */
+/* Dessine les nbChiffres derniers chiffres de l'entier n, à la position définie par les offsets */
 void dessineNombre(int n,int nbChiffres,int offset_x,int offset_y){
 	for(int i = 0;i < nbChiffres;i++){
 		dessineChiffre(n%10,offset_x+((nbChiffres-i-1)*TLBC/4),offset_y);
@@ -243,7 +242,8 @@ void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	return;
 }
 
-/* Le tétromino courant est affiché SSI tetroCourant est vrai */
+/* Dessine toute l'aire de jeu dans la fenêtre, puis l'affiche
+ * Le tétromino courant est affiché SSI tetroCourant est vrai */
 void affiche(etat* e,bool tetroCourant,int offset_x){
 	e -> affiche = false;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);
@@ -258,7 +258,7 @@ void affiche(etat* e,bool tetroCourant,int offset_x){
 
 /* Attente active de ms milisecondes
  * (fonction auxiliaire de afficheAnimationLignes)
- * (Pourrait être utilisée dans la fonction main, mais on perdrait alors peut-être légèrement en précision) */
+ * (Pourrait aussi être utilisée dans la fonction main, mais on perdrait alors peut-être légèrement en précision, il faudrait faire quelques tests...) */
 void attend(int ms){
 	int ticks = SDL_GetTicks();
 	while(SDL_GetTicks() < ticks + ms){ /* Attente active */ }
@@ -266,7 +266,7 @@ void attend(int ms){
 }
 
 /* Animation de suppression des lignes pleines
- * (C'est un bricolage assez sordide, et incompatible avec le mode deux joueurs) */
+ * (Bricolage assez sordide, incompatible avec le mode deux joueurs) */
 void afficheAnimationLignes(etat* e){
 	// Détection du nombre de lignes pleines
 	int nb = 4;
@@ -303,6 +303,7 @@ void afficheAnimationLignes(etat* e){
 	return;
 }
 
+/* Version 2 joueurs de la fonction d'affichage */
 void affiche2J(etat* e1,etat* e2){
 	int offsetJ2 = TLBC * (LARG+6) + MARGE;
 	SDL_SetRenderDrawColor(rndr,0,0,0,0);

@@ -9,6 +9,8 @@ using namespace std;
 const int LARG = 10;
 const int HAUT = 20;
 
+
+
 /* Renvoie la couleur du bloc de coordonnées (i,j) de la grille de jeu (de largeur LARG) contenue dans e */
 int blocG(etat* e,int i,int j){
 	return e->g[i+j*LARG];
@@ -20,7 +22,184 @@ void ecritBlocG(etat* e,int i,int j,int clr){
 	return;
 }
 
-/* Fonction auxiliaire pour la fonction suivante
+
+
+/* Initialise proprement la structure d'état */
+void initEtat(etat* e){
+	e -> idTetro = VIDE;
+	e -> reserve = VIDE;
+	for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;
+	e -> g = new int[HAUT*LARG];
+	for(int i = 0;i < HAUT*LARG;i++){
+		e->g[i] = 0;
+	}
+	e -> fermeture = false;
+	e -> descenteRapide = false;
+	for(int k = 0;k < 4;k++){
+		e -> lignesPleines[k] = -1;
+	}
+	e -> attaquesRecues = 0;
+	e -> lignes = 0;
+	e -> score = 0;
+	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
+	changeVitesse(e);	// Idem
+	// Génère les 14 premiers tétrominos :
+	prochainSac(e);
+	prochainSac(e);
+	tetrominoSuivant(e);
+	return;
+}
+
+/* Détruit proprement la structure d'état */
+void detruireEtat(etat* e){
+	delete[] e -> g;
+	return;
+}
+
+/* Change e->fermeture pour déclencher la fin du programme
+ * (Ne s'occupe pas de détruire proprement les structures utilisées, mais d'autres fonctions auront l'occasion de le faire */
+void finPartie(etat* e){
+	e -> fermeture = true;
+	return;
+}
+
+
+
+/* Vérifie si un mouvement du tétromino courant (translation de dx cases vers la droite et dy cases vers le 
+ * bas, accompagnée de drot rotations horaires) est valide, MAIS N'EFFECTUE PAS LE DÉPLACEMENT
+ * (Renvoie vrai si le mouvement est valide, et faux en cas de collision) */
+bool collision(etat* e,int dx,int dy,int drot){
+	int x = e->x + dx;
+	int y = e->y + dy;
+	int rota = ((e->rota + drot)%4 +4) %4;	// Bricolage pour avoir un entier entre 0 et 3...
+	for(int i = 0;i < 4;i++){
+		for(int j = 0;j < 4;j++){
+			if(x+i < 0 || x+i >= LARG){	// Cas où x+i est hors de la grille
+				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE) return false;
+			}else if(y+j < 0 || y+j >= HAUT){	// Cas où y+j est hors de la grille
+				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE) return false;
+			}else{		// Cas général, dans la grille
+				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE && blocG(e,e->x + dx + i,e->y + dy + j) != VIDE){
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+/* Translate le tétromino courant, si c'est possible
+ * Renvoie un booléen correspondant à la réussite de l'opération
+ * L'entier dir correspond à une direction et doit être bien choisi :
+ * (0 : haut ; 1 : droite ; 2 : bas ; 3 : gauche) */
+bool translation(etat* e,int dir){
+	switch(dir){
+		case 0:		// HAUT
+			if(collision(e,0,-1,0)){
+				e->y -= 1;
+				e -> affiche = true;
+				return true;
+			}
+			break;
+		case 1:		// DROITE
+			if(collision(e,1,0,0)){
+				e->x += 1;
+				e -> affiche = true;
+				return true;
+			}
+			break;
+		case 2:		// BAS
+			if(collision(e,0,1,0)){
+				e->y += 1;
+				e -> affiche = true;
+				return true;
+			}
+			break;
+		case 3:		// GAUCHE
+			if(collision(e,-1,0,0)){
+				e->x -= 1;
+				e -> affiche = true;
+				return true;
+			}
+			break;
+		default:	// Direction invalide, on ne fait rien
+			break;
+	}
+	return false;
+}
+
+/* Fonction auxilliaire de la fonction rotation, effectue la rotation (c'est cette fonction qui change l'état) en prenant
+ * en compte les wallkicks et en supposant que les tests de collisions ont déjà été faits */
+void appliqueRotation(etat* e,int wkx,int wky,bool sens){
+	if(sens) e -> rota = (((e->rota + 1) % 4)+4)%4;	// Formule un peu suspecte mais requise, pour toujours avoir e->rota entre 0 et 3
+	else e -> rota = (((e->rota -1) % 4)+4)%4;		// Idem
+	e -> x += wkx;
+	e -> y += wky;
+	e -> affiche = true;
+	return;
+}
+
+/* Modifie l'état e pour que le tétromino courant soit considéré comme ayant tourné, si c'est possible (sinon, ne fait rien)
+ * Le booléen sens est vrai SSI la rotation demandée est dans le sens horaire
+ * Si la rotation est bloquée par un mur ou un des blocs de la grille, on essaie de translater légèrement le tétromino courant ("wallkick") */
+void rotation(etat* e,bool sens){
+	int drot;
+	if(sens) drot = 1;
+	else drot = 3;
+	if(collision(e,0,0,drot)){
+		appliqueRotation(e,0,0,sens);
+	}else if(collision(e,1,0,drot)){	// Wallkick vers la droite
+		appliqueRotation(e,1,0,sens);
+	}else if(collision(e,-1,0,drot)){	// Wallkick vers la gauche
+		appliqueRotation(e,-1,0,sens);
+	}else if(collision(e,0,1,drot)){	// Wallkick vers le bas
+		appliqueRotation(e,0,1,sens);
+	/*}else if(collision(e,1,-1,drot)){	// Wallkick vers le haut
+		appliqueRotation(e,0,-1,sens);*/	// Permettrait de faire durer la partie indéfiniment...
+	}else if(collision(e,1,1,drot)){	// Wallkick bas-droite
+		appliqueRotation(e,1,1,sens);
+	}else if(collision(e,-1,1,drot)){	// Wallkick bas-gauche
+		appliqueRotation(e,-1,1,sens);
+	}else if(e->idTetro == I && collision(e,-2,0,drot)){	// Double wallkick à gauche, seulement pour le tétromino I
+		appliqueRotation(e,-2,0,sens);
+	}else if(e->idTetro == I && collision(e,0,2,drot)){		// Double wallkick bas, seulement pour le tétromino I
+		appliqueRotation(e,0,2,sens);
+	}	// Si tout échoue, on considère que la rotation a échoué, et on ne fait rien
+	return;
+}
+
+/* Descente automatique du tetromino courant, et incrémente le score en descente rapide
+ * Ne gère pas le timing, donc doit être appelée "au bon moment"
+ * Fixe le tétromino s'il ne peut pas descendre (donc déclenche indirectement l'appel du tétromino suivant et la détection des lignes pleines) */
+void descenteAuto(etat* e){
+	if(!translation(e,2)){
+		fixeTetromino(e);
+	}else if(e -> descenteRapide){
+		e -> score += 1;
+		// On veut ajouter un point seulement lorsque la descente actuelle est rapide, et a effectivement lieu
+	}
+	return;
+}
+
+/* Descend le tétromino courant autant que possible immédiatement, donne quelques points, et passe au suivant */
+void descenteImmediate(etat* e){
+	e -> iDescente = 0;	// Sinon, le tétromino suivant ferait sa première descente plus tôt que prévu
+	while(translation(e,2)) e->score += 2;	// On augmente le score de 2 points par bloc descendu
+	fixeTetromino(e);
+	return;
+}
+
+/* Active ou désactive la descente rapide, selon la valeur du booléen rapide */
+void descenteRapide(etat* e,bool rapide){
+	e -> descenteRapide = rapide;
+	return;
+}
+
+
+
+
+
+/* Fonction auxiliaire pour prochainSac
  * Permute les éléments d'indice i et j du tableau t */
 void permute(int* t,int i,int j){
 	int tmp = t[i];
@@ -133,77 +312,6 @@ void changeVitesse(etat* e){
 	return;
 }
 
-/* Vérifie si un mouvement du tétromino courant (translation de dx cases vers la droite et dy cases vers le 
- * bas, accompagnée de drot rotations horaires) est valide, MAIS N'EFFECTUE PAS LE DÉPLACEMENT
- * (Renvoie vrai si le mouvement est valide, et faux en cas de collision) */
-bool collision(etat* e,int dx,int dy,int drot){
-	int x = e->x + dx;
-	int y = e->y + dy;
-	int rota = ((e->rota + drot)%4 +4) %4;	// Bricolage pour avoir un entier entre 0 et 3...
-	for(int i = 0;i < 4;i++){
-		for(int j = 0;j < 4;j++){
-			if(x+i < 0 || x+i >= LARG){	// Cas où x+i est hors de la grille
-				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE) return false;
-			}else if(y+j < 0 || y+j >= HAUT){	// Cas où y+j est hors de la grille
-				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE) return false;
-			}else{		// Cas général, dans la grille
-				if(blocT(tetro(e->idTetro,rota),i,j) != VIDE && blocG(e,e->x + dx + i,e->y + dy + j) != VIDE){
-					return false;
-				}
-			}
-		}
-	}
-	return true;
-}
-
-/* Translate le tétromino courant, si c'est possible
- * Renvoie un booléen correspondant à la réussite de l'opération
- * L'entier dir correspond à une direction et doit être bien choisi :
- * (0 : haut ; 1 : droite ; 2 : bas ; 3 : gauche) */
-bool translation(etat* e,int dir){
-	switch(dir){
-		case 0:		// HAUT
-			if(collision(e,0,-1,0)){
-				e->y -= 1;
-				e -> affiche = true;
-				return true;
-			}
-			break;
-		case 1:		// DROITE
-			if(collision(e,1,0,0)){
-				e->x += 1;
-				e -> affiche = true;
-				return true;
-			}
-			break;
-		case 2:		// BAS
-			if(collision(e,0,1,0)){
-				e->y += 1;
-				e -> affiche = true;
-				return true;
-			}
-			break;
-		case 3:		// GAUCHE
-			if(collision(e,-1,0,0)){
-				e->x -= 1;
-				e -> affiche = true;
-				return true;
-			}
-			break;
-		default:	// Direction invalide
-			// Afficher un message d'erreur ?
-			break;
-	}
-	return false;
-}
-
-/* Change e->fermeture pour déclencher la fin du programme
- * (Ne s'occupe pas de détruire proprement les structures utilisées, mais d'autres fonctions auront l'occasion de le faire */
-void finPartie(etat* e){
-	e -> fermeture = true;
-	return;
-}
-
 /* Place le prochain tétromino à son "point de départ" sur la grille de jeu et effectue les initialisations requises
  * Permettra éventuellement d'affiner un peu les points de départ des différents tétrominos
  * Pourrait servir à vérifier s'il y a une collision en posant le tétromino, et déclencher ainsi la fin de la partie... */
@@ -221,7 +329,7 @@ void placeTetromino(etat* e){
 	e -> iDescente = 0;
 	e -> descenteRapide = false;	// Pour éviter les accidents stupides si la touche reste enfoncée
 	if(!collision(e,0,0,0)) finPartie(e);	// Si on ne peut pas placer le bloc, la partie est terminée
-	// RAJOUTER DES WALLKICKS LATÉRAUX ICI
+	// Éventuellement rajouter des wallkicks latéraux ici...
 	e -> affiche = true;
 	return;
 }
@@ -242,106 +350,9 @@ void tetrominoSuivant(etat* e){
 	return;
 }
 
-/* Initialise proprement la structure d'état */
-void initEtat(etat* e){
-	e -> idTetro = VIDE;
-	e -> reserve = VIDE;
-	for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;
-	e -> g = new int[HAUT*LARG];
-	for(int i = 0;i < HAUT*LARG;i++){
-		e->g[i] = 0;
-	}
-	e -> fermeture = false;
-	e -> descenteRapide = false;
-	for(int k = 0;k < 4;k++){
-		e -> lignesPleines[k] = -1;
-	}
-	e -> attaquesRecues = 0;
-	e -> lignes = 0;
-	e -> score = 0;
-	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
-	changeVitesse(e);	// Idem
-	// Génère les 14 premiers tétrominos :
-	prochainSac(e);
-	prochainSac(e);
-	tetrominoSuivant(e);
-	return;
-}
 
-/* Détruit proprement la structure d'état */
-void detruireEtat(etat* e){
-	delete[] e -> g;
-	return;
-}
 
-/* Envoie le tétromino courant dans la réserve (si possible), et le remplace par celui de la réserve (ou par le suivant lors de la 1ère utilisation de la réserve) */
-void reserve(etat* e){		// IL FAUDRA AJOUTER UNE VÉRIFICATION DES COLLISIONS !
-	if(e -> reserveDispo){
-		if(e -> reserve == VIDE){	// Cas particulier de la première utilisation de la réserve
-			e -> reserve = e -> idTetro;
-			tetrominoSuivant(e);
-		}else{
-			int tmp = e -> reserve;
-			e -> reserve = e -> idTetro;
-			e -> idTetro = tmp;
-			placeTetromino(e);
-		}
-		e -> reserveDispo = false;
-	}
-	return;
-}
 
-/* Vérifie si des lignes complétées existent dans la grille
- * Si oui, les enlève et effectue toutes les incrémentations nécessaires (score, lignes, niveau, vitesse de descente)
- * ANCIENNE VERSION, SANS ANIMATIONS À LA SUPPRESSION DES LIGNES (mais on la garde au cas où pour l'instant) */
-/*void enleveLignesOld(etat* e){
-	int nbLignes = 0;
-	bool plein;
-	for(int j = HAUT-1;j >= 0;j--){
-		plein = true;
-		// On vérifie si la j-ième ligne est pleine :
-		for(int i = 0;i < LARG;i++){
-			if(blocG(e,i,j) == VIDE){
-				plein = false;
-				break;
-			}
-		}
-		if(plein){
-			nbLignes += 1;
-			// On fait descendre les lignes supérieures :
-			for(int k = j-1;k >= 0;k--){
-				for(int i = 0;i < LARG;i++){
-					ecritBlocG(e,i,k+1,blocG(e,i,k));
-				}
-			}
-			// On remet bien des blocs VIDEs sur la ligne la plus haute :
-			for(int i = 0;i < LARG;i++){
-				ecritBlocG(e,i,0,VIDE);
-			}
-			j += 1;		// Permet de détecter le cas où 2 lignes "d'affilée" sont complétées (sinon, on saute la 2ème...)
-		}
-	}
-	e -> lignes += nbLignes;
-	switch(nbLignes){	// Incrémentation du score
-		case(1):
-			e -> score += 40*(e->niveau+1);
-			break;
-		case(2):
-			e -> score += 100*(e->niveau+1);
-			break;
-		case(3):
-			e -> score += 300*(e->niveau+1);
-			break;
-		case(4):
-			e -> score += 1200*(e->niveau+1);
-			break;
-	}
-	if(e->lignes >= 10*(e->niveau+1)){
-		e->niveau += 1;
-		changeVitesse(e);
-	}
-	return;
-}*/
 
 /* Remplit e->lignesPleines contenant par les ordonnées des lignes pleines, DANS L'ORDRE CROISSANT
  * Ne vide pas ces lignes, et n'incrémente pas le compteur de lignes (UTILISER SUPPRIMELIGNES POUR ÇA)
@@ -486,6 +497,23 @@ void recoitAttaques(etat* e){
 	return;
 }
 
+/* Envoie le tétromino courant dans la réserve (si possible), et le remplace par celui de la réserve (ou par le suivant lors de la 1ère utilisation de la réserve) */
+void reserve(etat* e){
+	if(e -> reserveDispo){
+		if(e -> reserve == VIDE){	// Cas particulier de la première utilisation de la réserve
+			e -> reserve = e -> idTetro;
+			tetrominoSuivant(e);
+		}else{
+			int tmp = e -> reserve;
+			e -> reserve = e -> idTetro;
+			e -> idTetro = tmp;
+			placeTetromino(e);
+		}
+		e -> reserveDispo = false;
+	}
+	return;
+}
+
 /* Place les blocs du tétromino courant dans e->g, et appelle le tétromino suivant
  * Appelle indirectement la détection des lignes pleines, mais ne cherche pas à les enlever */
 void fixeTetromino(etat* e){
@@ -496,75 +524,8 @@ void fixeTetromino(etat* e){
 		}
 	}
 	detecteLignes(e);
-	//recoitAttaques(e);	// GROS BUG, apparamment
+	//recoitAttaques(e);	// SEGFAULT, à mieux tester...
 	tetrominoSuivant(e);
-	return;
-}
-
-/* Descente automatique du tetromino courant, et incrémente le score en descente rapide
- * Ne gère pas le timing, donc doit être appelée "au bon moment"
- * Fixe le tétromino s'il ne peut pas descendre (donc déclenche indirectement l'appel du tétromino suivant et la détection des lignes pleines) */
-void descenteAuto(etat* e){
-	if(!translation(e,2)){
-		fixeTetromino(e);
-	}else if(e -> descenteRapide){
-		e -> score += 1;
-		// On veut ajouter un point seulement lorsque la descente actuelle est rapide, et a effectivement lieu
-	}
-	return;
-}
-
-/* Descend le tétromino courant autant que possible immédiatement, donne quelques points, et passe au suivant */
-void descenteImmediate(etat* e){
-	e -> iDescente = 0;	// Sinon, le tétromino suivant ferait sa première descente plus tôt que prévu
-	while(translation(e,2)) e->score += 2;	// On augmente le score de 2 points par bloc descendu
-	fixeTetromino(e);
-	return;
-}
-
-/* Fonction auxilliaire de la fonction rotation, effectue la rotation (change l'état) en prenant
- * en compte les wallkicks et en supposant que les tests de collisions ont déjà été faits */
-void appliqueRotation(etat* e,int wkx,int wky,bool sens){
-	if(sens) e -> rota = (((e->rota + 1) % 4)+4)%4;	// Formule un peu suspecte mais requise, pour toujours avoir e->rota entre 0 et 3
-	else e -> rota = (((e->rota -1) % 4)+4)%4;		// Idem
-	e -> x += wkx;
-	e -> y += wky;
-	e -> affiche = true;
-	return;
-}
-
-/* Modifie l'état e pour que le tétromino courant soit considéré comme ayant tourné, si c'est possible (sinon, ne fait rien)
- * Le booléen sens est vrai SSI la rotation demandée est dans le sens horaire
- * Si la rotation n'est est bloquée par un mur ou un des blocs de la grille, on essaie de translater légèrement le tétromino courant ("wallkick") */
-void rotation(etat* e,bool sens){
-	int drot;
-	if(sens) drot = 1;
-	else drot = 3;
-	if(collision(e,0,0,drot)){
-		appliqueRotation(e,0,0,sens);
-	}else if(collision(e,1,0,drot)){	// Wallkick vers la droite
-		appliqueRotation(e,1,0,sens);
-	}else if(collision(e,-1,0,drot)){	// Wallkick vers la gauche
-		appliqueRotation(e,-1,0,sens);
-	}else if(collision(e,0,1,drot)){	// Wallkick vers le bas
-		appliqueRotation(e,0,1,sens);
-	/*}else if(collision(e,1,-1,drot)){	// Wallkick vers le haut
-		appliqueRotation(e,0,-1,sens);*/	// Permettrait de faire durer la partie indéfiniment...
-	}else if(collision(e,1,1,drot)){	// Wallkick bas-droite
-		appliqueRotation(e,1,1,sens);
-	}else if(collision(e,-1,1,drot)){	// Wallkick bas-gauche
-		appliqueRotation(e,-1,1,sens);
-	}else if(e->idTetro == I && collision(e,-2,0,drot)){	// Double wallkick à gauche, seulement pour le tétromino I
-		appliqueRotation(e,-2,0,sens);
-	}else if(e->idTetro == I && collision(e,0,2,drot)){		// Double wallkick bas, seulement pour le tétromino I
-		appliqueRotation(e,0,2,sens);
-	}	// Si tout échoue, on considère que la rotation a échoué, et on ne fait rien
-	return;
-}
-
-/* Active ou désactive la descente rapide, selon la valeur du booléen rapide */
-void descenteRapide(etat* e,bool rapide){
-	e -> descenteRapide = rapide;
 	return;
 }
 

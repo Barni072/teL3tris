@@ -9,7 +9,7 @@ struct s_etat{
 	int idTetro;	// Indice du tetromino courant
 	int x;		// Abscisse du tetromino courant, vers la droite
 	int y;		// Ordonnée du tetromino courant, VERS LE BAS
-	int rota;	// Nombre de rotations effectuées par le tetromino courant
+	int rota;	// Nombre de rotations horaires effectuées par le tetromino courant, modulo 4
 	int suivants[14];	// Indices des tetrominos à venir, assez grand pour 2 sacs
 	int reserve; 	// Indice du tétromino actuellement en réserve (VIDE s'il n'y en a pas)
 	bool reserveDispo;		// Si vrai, le tétromino courant ne provient pas de la réserve, et il est autorisé de l'y envoyer

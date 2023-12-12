@@ -53,8 +53,8 @@ void appliqueCommandes1J(etat* e){
 	}
 	return;
 }
-// TODO : Refaire cette fonction avec des commandes non hardcodées, et implémenter une pause ?
 
+/* Version 2 joueurs de la fonction précédente */
 void appliqueCommandes2J(etat* e1,etat* e2){
 	if(SDL_PollEvent(&evnt)){
 		switch(evnt.type){
