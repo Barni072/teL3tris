@@ -9,7 +9,8 @@ using namespace std;
 const int LARG = 10;
 const int HAUT = 20;
 
-
+// Durée d'un sixième de l'animation de suppression des lignes, comptée en itérations de la boucle principale
+const int TMPS_ANIM = 50;
 
 /* Renvoie la couleur du bloc de coordonnées (i,j) de la grille de jeu (de largeur LARG) contenue dans e */
 int blocG(etat* e,int i,int j){
@@ -22,6 +23,17 @@ void ecritBlocG(etat* e,int i,int j,int clr){
 	return;
 }
 
+/* Renvoie la couleur du bloc de coordonnées (i,j) de e->copieLignesAnimation (de largeur LARG) */
+int blocC(etat* e,int i,int j){
+	return e->copieLignesAnimation[i+j*LARG];
+}
+
+/* Remplace la valeur du bloc de coordonnées (i,j) de e->copieLignesAnimation par clr */
+void ecritBlocC(etat* e,int i,int j,int clr){
+	e->copieLignesAnimation[i+j*LARG] = clr;
+	return;
+}
+
 
 
 /* Initialise proprement la structure d'état */
@@ -30,6 +42,7 @@ void initEtat(etat* e){
 	e -> reserve = VIDE;
 	for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;
 	e -> g = new int[HAUT*LARG];
+	e -> copieLignesAnimation = new int[4*LARG];
 	for(int i = 0;i < HAUT*LARG;i++){
 		e->g[i] = 0;
 	}
@@ -39,6 +52,7 @@ void initEtat(etat* e){
 		e -> lignesPleines[k] = -1;
 	}
 	e -> attaquesRecues = 0;
+	e -> progresAnimationLignes = -1;	// L'animation de suppression des lignes n'a aucune raison d'être activée en début de partie
 	e -> lignes = 0;
 	e -> score = 0;
 	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
@@ -53,6 +67,7 @@ void initEtat(etat* e){
 /* Détruit proprement la structure d'état */
 void detruireEtat(etat* e){
 	delete[] e -> g;
+	delete[] e -> copieLignesAnimation;
 	return;
 }
 
@@ -228,8 +243,8 @@ void prochainSac(etat* e){
 		for(int i = 0;i <= 6;i++){
 			t[i] = i+1;		// Car les indices des tétominos vont de 1 à 7
 		}
-		for(int i = 0;i <= 6;i++){
-			int j = rand() % 7;
+		for(int i = 6;i >= 0;i--){
+			int j = rand() % (i+1);
 			permute(t,i,j);
 		}
 		// Rajoute les nouveaux indices dans l'état e :
@@ -354,9 +369,16 @@ void tetrominoSuivant(etat* e){
 
 
 
+/* Fonction auxiliaire de detecteLignes, déclenche l'animation de suppression des lignes, en changeant e->progresAnimationLignes */
+void declencheAnimationLignes(etat* e){
+	e -> progresAnimationLignes = TMPS_ANIM * 6;
+	return;
+}
+
 /* Remplit e->lignesPleines contenant par les ordonnées des lignes pleines, DANS L'ORDRE CROISSANT
  * Ne vide pas ces lignes, et n'incrémente pas le compteur de lignes (UTILISER SUPPRIMELIGNES POUR ÇA)
- * Il peut y avoir au maximum 4 lignes remplies à la fois, d'où la taille du tableau */
+ * Copie aussi les lignes pleines dans le tableau e->copieLignesAnimation
+ * Il peut y avoir au maximum 4 lignes remplies à la fois, d'où la taille de e->lignesPleines */
 void detecteLignes(etat* e){
 	int k = 0;
 	for(int j = 0;j < HAUT;j++){
@@ -370,8 +392,15 @@ void detecteLignes(etat* e){
 		}
 		if(plein){
 			e -> lignesPleines[k] = j;
+			// Copie dans le tableau e->copieLignesAnimation :
+			for(int i = 0;i < LARG;i++){
+				ecritBlocC(e,i,k,blocG(e,i,e->lignesPleines[k]));
+			}
 			k += 1;
 		}
+	}
+	if(k != 0){		// càd : si au moins une ligne pleine a été détectée
+		declencheAnimationLignes(e);
 	}
 	return;
 }
@@ -467,6 +496,7 @@ void supprimeLignes2J(etat* e,etat* adv){
 		e->niveau += 1;
 		changeVitesse(e);
 	}
+	//e->progresAnimationLignes = -1;	//TEST
 	return;
 }
 

@@ -83,19 +83,15 @@ void jeuUnJoueur(){
 	initialisation1J(&e);
 	int ticks = SDL_GetTicks();
 	while(!(e.fermeture)){
-		if(e.iDescente >= e.delaiDescente || (e.descenteRapide && e.iDescente >= 25)){
-			descenteAuto(&e);
-			e.iDescente = 0;
-		}
-		appliqueCommandes1J(&e);
-		if(e.affiche){		// On ne veut recharger l'affichage que si c'est nécessaire
-			if(e.lignesPleines[0] == -1) affiche(&e,true,0);	// Cas où il n'y a pas de lignes pleines : on affiche le jeu normalement
-			else{	// Il y a des lignes pleines : on les fait clignoter puis on les enlève
-				afficheAnimationLignes(&e);
-				supprimeLignes1J(&e);
-				affiche(&e,true,0);
+		if(e.progresAnimationLignes == -1){	// On ne veut pas que l'état change si l'animation de suppression des lignes est en cours
+			if(e.iDescente >= e.delaiDescente || (e.descenteRapide && e.iDescente >= 25)){
+				descenteAuto(&e);
+				e.iDescente = 0;
 			}
+			appliqueCommandes1J(&e);
 		}
+		affiche1J(&e);
+		if(e.progresAnimationLignes == -1) supprimeLignes1J(&e);	// On veut que l'animation se soit terminée avant de supprimer les lignes
 		e.iDescente += 1;
 		while(SDL_GetTicks() < ticks + 2){ /* Attente active, 2ms (500Hz) */ }
 		ticks = SDL_GetTicks();	
@@ -108,30 +104,40 @@ void jeuUnJoueur(){
 	return;
 } 
 
-/* Encore incomplet */
+/* Douteux */
 void jeuDeuxJoueurs(){
 	etat e1,e2;
 	initialisation2J(&e1,&e2);
 	int ticks = SDL_GetTicks();
 	while(!(e1.fermeture && e2.fermeture)){
-		if(e1.iDescente >= e1.delaiDescente || (e1.descenteRapide && e1.iDescente >= 25)){
-			descenteAuto(&e1);
-			e1.iDescente = 0;
+		// Descentes automatiques et applications de commandes :
+		// Si l'animation de suppression des lignes est en cours pour un joueur, le jeu continue pour l'autre
+		if(e1.progresAnimationLignes == -1){
+			if(e1.iDescente >= e1.delaiDescente || (e1.descenteRapide && e1.iDescente >= 25)){
+				descenteAuto(&e1);
+				e1.iDescente = 0;
+			}
 		}
-		if(e2.iDescente >= e2.delaiDescente || (e2.descenteRapide && e2.iDescente >= 25)){
-			descenteAuto(&e2);
-			e2.iDescente = 0;
+		if(e2.progresAnimationLignes == -1){
+			if(e2.iDescente >= e2.delaiDescente || (e2.descenteRapide && e2.iDescente >= 25)){
+				descenteAuto(&e2);
+				e2.iDescente = 0;
+			}
 		}
-		if(e1.lignesPleines[0] != -1) supprimeLignes2J(&e1,&e2);
-		if(e2.lignesPleines[0] != -1) supprimeLignes2J(&e2,&e1);
+		
+		// Rien n'empêche de demander un déplacement pendant une animation de suppression de lignes... Ceci risque de causer des problèmes...
 		appliqueCommandes2J(&e1,&e2);
+
 		// Si un joueur a perdu, il patiente devant un "écran de fin"
 		if(e1.fermeture) grillePerdant(&e1);
 		if(e2.fermeture) grillePerdant(&e2);
-		// TODO : animation de suppression des lignes en mode 2 joueurs
-		if(e1.affiche || e2.affiche){
-			affiche2J(&e1,&e2);
-		}
+		
+		affiche2J(&e1,&e2);
+		
+		// Suppression des lignes, déclenche aussi l'envoi des attaques
+		if(e1.progresAnimationLignes) supprimeLignes2J(&e1,&e2);
+		if(e2.progresAnimationLignes) supprimeLignes2J(&e2,&e1);
+		
 		e1.iDescente += 1;
 		e2.iDescente += 1;
 		while(SDL_GetTicks() < ticks + 2){ /* Attente active, 2ms (500Hz) */ }

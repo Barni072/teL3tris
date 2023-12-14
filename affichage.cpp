@@ -242,82 +242,80 @@ void dessineLignesScore(etat* e,int offset_x,int offset_y){
 	return;
 }
 
-/* Dessine toute l'aire de jeu dans la fenêtre, puis l'affiche
- * Le tétromino courant est affiché SSI tetroCourant est vrai */
-void affiche(etat* e,bool tetroCourant,int offset_x){
-	e -> affiche = false;
-	SDL_SetRenderDrawColor(rndr,0,0,0,0);
-	SDL_RenderClear(rndr);
-	dessineGrillePrincipale(e,MARGE,MARGE,tetroCourant);
-	dessineReserve(e,(LARG+1)*TLBC + MARGE,MARGE);
-	dessineLignesScore(e,(LARG+1)*TLBC + MARGE,5*TLBC + MARGE);
-	dessineSuivants(e,3,(LARG+1)*TLBC + MARGE,8*TLBC + MARGE);
-	SDL_RenderPresent(rndr);	// NE SEMBLE TOUJOURS PAS FONCTIONNER SOUS X11
+/* Fonction auxilliaire de affiche1J et affiche2J, s'occupe de dessiner l'aire de jeu et de rafraîchir la fenêtre
+ * Si clear est vrai, nettoie la fenêtre avant de dessiner dedans, puis l'envoie à l'affichage une fois le dessin effectué */
+void afficheAux(etat* e,int offset_x,bool clear){
+	if(clear){
+		SDL_SetRenderDrawColor(rndr,0,0,0,0);
+		SDL_RenderClear(rndr);
+	}
+	dessineGrillePrincipale(e,MARGE + offset_x,MARGE,(e->progresAnimationLignes == -1));		// On ne veut pas afficher le tétromino courant si l'animation de suppression des lignes est en cours
+	dessineReserve(e,(LARG+1)*TLBC + MARGE + offset_x,MARGE);
+	dessineLignesScore(e,(LARG+1)*TLBC + MARGE + offset_x,5*TLBC + MARGE);
+	dessineSuivants(e,3,(LARG+1)*TLBC + MARGE + offset_x,8*TLBC + MARGE);
+	if(clear){
+		SDL_RenderPresent(rndr);	// NE SEMBLE TOUJOURS PAS FONCTIONNER SOUS X11
+	}
 	return;
 }
 
-/* Attente active de ms milisecondes
- * (fonction auxiliaire de afficheAnimationLignes)
- * (Pourrait aussi être utilisée dans la fonction main, mais on perdrait alors peut-être légèrement en précision, il faudrait faire quelques tests...) */
-void attend(int ms){
-	int ticks = SDL_GetTicks();
-	while(SDL_GetTicks() < ticks + ms){ /* Attente active */ }
-	return;
-}
-
-/* Animation de suppression des lignes pleines
- * (Bricolage assez sordide, incompatible avec le mode deux joueurs) */
-void afficheAnimationLignes(etat* e){
-	// Détection du nombre de lignes pleines
-	int nb = 4;
-	for(int k = 3;k >= 0;k--){
-		if(e->lignesPleines[k] == -1){
-			nb = k;
-		}
-	}
-	// Stockage des couleurs des blocs à faire clignoter :
-	int* tabCouleurs = new int[4*LARG];
-	for(int k = 0;k < nb;k++){
-		for(int i = 0;i < LARG;i++){
-			tabCouleurs[LARG*k+i] = blocG(e,i,e->lignesPleines[k]);
-		}
-	}
-	// Clignotement 3 fois :
-	for(int l = 0;l < 3;l++){
-		for(int k = 0;k < nb;k++){
-			for(int i = 0;i < LARG;i++){
-				ecritBlocG(e,i,e->lignesPleines[k],BRILLE);
+/* Autre fonction auxiliaire de affiche1J et affiche2J, s'occupe de l'animation de suppression des lignes,
+ * et ne contient pas d'attente active (donc ne bloque pas l'autre joueur en mode 2 joueurs) */
+void afficheAnim(etat* e,int offset_x){
+	if((e -> progresAnimationLignes) % (TMPS_ANIM*2) == 0){
+		// Passage en "couleur qui BRILLE" des lignes pleines
+		for(int k = 0;k < 4;k++){
+			if(e -> lignesPleines[k] != -1){		// Il peut tout à fait y avoir moins de 4 lignes pleines, et il y a alors moins de blocs à changer de couleur
+				for(int i = 0;i < LARG;i++){
+					ecritBlocG(e,i,e->lignesPleines[k],BRILLE);
+				}
 			}
 		}
-		affiche(e,false,0);
-		attend(90);
-		for(int k = 0;k < nb;k++){
-			for(int i = 0;i < LARG;i++){
-				ecritBlocG(e,i,e->lignesPleines[k],tabCouleurs[LARG*k+i]);
+		e -> affiche = true;
+	}else if((e -> progresAnimationLignes) % TMPS_ANIM == 0){
+		// Repassage en "couleurs normales", récupérées dans le tableau prévu à cet effet (e->copieLignesAnimation) :
+		for(int k = 0;k < 4;k++){
+			if(e -> lignesPleines[k] != -1){	// Même remarque qu'une dizaine de lignes au dessus
+				for(int i = 0;i < LARG;i++){
+					ecritBlocG(e,i,e->lignesPleines[k],blocC(e,i,k));
+				}
 			}
 		}
-		affiche(e,false,0);
-		attend(60);
+		e -> affiche = true;
 	}
-	delete[] tabCouleurs;
+	if(e->affiche) cout << e -> progresAnimationLignes << endl;	// DEBUG
+	e -> progresAnimationLignes -= 1;
 	return;
 }
 
-/* Version 2 joueurs de la fonction d'affichage */
+/* Détermine si la fenêtre doit être rafraîchie, et ne la fait rafraîchir que si
+ * e->affiche est vrai, OU si l'animation de suppression des lignes doit avancer */
+void affiche1J(etat* e){
+	if(e -> affiche){	// Sinon, il n'y a rien de nouveau à afficher...
+		e -> affiche = false;
+		afficheAux(e,0,true);
+	}else if((e -> progresAnimationLignes) != -1){	// ... sauf dans le cas particulier de l'animation de suppression des lignes :
+		afficheAnim(e,0);
+	}	// Sinon, on attend
+	return;
+}
+
+/* Version 2 joueurs de la fonction d'affichage, tient avec du scotch */
 void affiche2J(etat* e1,etat* e2){
 	int offsetJ2 = TLBC * (LARG+6) + MARGE;
-	SDL_SetRenderDrawColor(rndr,0,0,0,0);
-	SDL_RenderClear(rndr);
-	e1 -> affiche = false;
-	e2 -> affiche = false;
-	dessineGrillePrincipale(e1,MARGE,MARGE,true);
-	dessineGrillePrincipale(e2,MARGE + offsetJ2,MARGE,true);
-	dessineReserve(e1,(LARG+1)*TLBC + MARGE,MARGE);
-	dessineReserve(e2,(LARG+1)*TLBC + MARGE + offsetJ2,MARGE);
-	dessineLignesScore(e1,(LARG+1)*TLBC + MARGE,5*TLBC + MARGE);
-	dessineLignesScore(e2,(LARG+1)*TLBC + MARGE + offsetJ2,5*TLBC + MARGE);
-	dessineSuivants(e1,3,(LARG+1)*TLBC + MARGE,8*TLBC + MARGE);
-	dessineSuivants(e2,3,(LARG+1)*TLBC + MARGE + offsetJ2,8*TLBC + MARGE);
-	SDL_RenderPresent(rndr);
+	
+	if(e1->progresAnimationLignes != -1) afficheAnim(e1,0);
+	if(e2->progresAnimationLignes != -1) afficheAnim(e2,offsetJ2);
+	
+	if((e1 -> affiche) || (e2 -> affiche)){
+		SDL_SetRenderDrawColor(rndr,0,0,0,0);
+		SDL_RenderClear(rndr);
+		e1 -> affiche = false;
+		afficheAux(e1,0,false);
+		e2 -> affiche = false;
+		afficheAux(e2,offsetJ2,false);
+		SDL_RenderPresent(rndr);
+		if(e1->progresAnimationLignes != -1) cout << "YOLO" << endl;	// DEBUG
+	}
 	return;
 }

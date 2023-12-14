@@ -17,9 +17,9 @@ extern const int MARGE;
 //void dessineLignesScore(etat* e,int offset_x,int offset_y);
 //void dessineChiffre(int i,int offset_x,int offset_y);
 //void dessineNombre(int n,int nbChiffres,int offset_x,int offset_y);
-void affiche(etat* e,bool tetroCourant,int offset_x);
-//void attend(int ms);
-void afficheAnimationLignes(etat* e);
+//void afficheAux(etat* e,int offset_x,bool clear);
+//void afficheAnim(etat* e,int offset_x);
+void affiche1J(etat* e);
 void affiche2J(etat* e1,etat* e2);
 
 #endif 
