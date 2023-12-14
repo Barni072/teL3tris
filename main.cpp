@@ -16,7 +16,7 @@ ifstream cfg;
 void initialisation1J(etat* e){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	TTF_Init();
-	fenetre = SDL_CreateWindow("teL3tris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,(LARG+5)*TLBC + 2*MARGE,HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
+	fenetre = SDL_CreateWindow("teLtr3is",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,(LARG+5)*TLBC + 2*MARGE,HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	srand(time(NULL));
 	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
@@ -35,7 +35,7 @@ void initialisation1J(etat* e){
 void initialisation2J(etat* e1,etat* e2){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	TTF_Init();
-	fenetre = SDL_CreateWindow("teL3tris",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,2*(LARG+5)*TLBC + 2*(MARGE+TLBC),HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
+	fenetre = SDL_CreateWindow("teLtr3is",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,2*(LARG+5)*TLBC + 2*(MARGE+TLBC),HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
 	if(police == NULL) cout << "ATTENTION ! Fichier de police de texte non trouvé, affichage des scores impossible..." << endl;
@@ -104,7 +104,7 @@ void jeuUnJoueur(){
 	return;
 } 
 
-/* Douteux */
+/* Pas fini... */
 void jeuDeuxJoueurs(){
 	etat e1,e2;
 	initialisation2J(&e1,&e2);
@@ -150,7 +150,7 @@ void jeuDeuxJoueurs(){
 
 int main(){
 	int joueurs = 1;
-	cfg.open("teL3tris.cfg");
+	cfg.open("teLtr3is.cfg");
 	cfg >> joueurs;
 	if(joueurs == 1) jeuUnJoueur();	// MODE UN JOUEUR (Cas par défaut si le fichier de configuration est absent)
 	else if(joueurs == 2)jeuDeuxJoueurs();	// MODE DEUX JOUEURS

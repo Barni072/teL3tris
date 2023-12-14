@@ -1,5 +1,5 @@
-teL3tris: main.o affichage.o grille.o entree.o tetrominos.o
-	g++ main.o affichage.o grille.o entree.o tetrominos.o -o teL3tris -lSDL2 -lSDL2_ttf
+teLtr3is: main.o affichage.o grille.o entree.o tetrominos.o
+	g++ main.o affichage.o grille.o entree.o tetrominos.o -o teLtr3is -lSDL2 -lSDL2_ttf
 main.o: main.cpp affichage.h grille.h entree.h
 	g++ -c main.cpp
 affichage.o: affichage.cpp affichage.h grille.h tetrominos.h
@@ -12,4 +12,4 @@ tetrominos.o: tetrominos.cpp tetrominos.h
 	g++ -c tetrominos.cpp
 clean:
 	rm -f *.o
-	rm -f teL3tris
+	rm -f teLtr3is

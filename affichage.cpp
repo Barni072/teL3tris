@@ -283,7 +283,6 @@ void afficheAnim(etat* e,int offset_x){
 		}
 		e -> affiche = true;
 	}
-	if(e->affiche) cout << e -> progresAnimationLignes << endl;	// DEBUG
 	e -> progresAnimationLignes -= 1;
 	return;
 }
@@ -315,7 +314,6 @@ void affiche2J(etat* e1,etat* e2){
 		e2 -> affiche = false;
 		afficheAux(e2,offsetJ2,false);
 		SDL_RenderPresent(rndr);
-		if(e1->progresAnimationLignes != -1) cout << "YOLO" << endl;	// DEBUG
 	}
 	return;
 }
