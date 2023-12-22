@@ -9,6 +9,10 @@ using namespace std;
 const int LARG = 10;
 const int HAUT = 20;
 
+// Tétrominos suivants
+const int NB_SUIVANTS = 7000;		// Il est préférable que NB_SUIVANTS soit un multiple de 2*7=14
+int* SUIVANTS;
+
 // Durée d'un sixième de l'animation de suppression des lignes, comptée en itérations de la boucle principale
 const int TMPS_ANIM = 50;
 
@@ -36,47 +40,13 @@ void ecritBlocC(etat* e,int i,int j,int clr){
 
 
 
-/* Initialise proprement la structure d'état */
-void initEtat(etat* e){
-	e -> idTetro = VIDE;
-	e -> reserve = VIDE;
-	for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;
-	e -> g = new int[HAUT*LARG];
-	e -> copieLignesAnimation = new int[4*LARG];
-	for(int i = 0;i < HAUT*LARG;i++){
-		e->g[i] = 0;
-	}
-	e -> fermeture = false;
-	e -> descenteRapide = false;
-	for(int k = 0;k < 4;k++){
-		e -> lignesPleines[k] = -1;
-	}
-	e -> attaquesRecues = 0;
-	e -> progresAnimationLignes = -1;	// L'animation de suppression des lignes n'a aucune raison d'être activée en début de partie
-	e -> lignes = 0;
-	e -> score = 0;
-	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
-	changeVitesse(e);	// Idem
-	// Génère les 14 premiers tétrominos :
-	prochainSac(e);
-	prochainSac(e);
-	tetrominoSuivant(e);
-	return;
-}
-
-/* Détruit proprement la structure d'état */
-void detruireEtat(etat* e){
-	delete[] e -> g;
-	delete[] e -> copieLignesAnimation;
-	return;
-}
-
 /* Change e->fermeture pour déclencher la fin du programme
- * (Ne s'occupe pas de détruire proprement les structures utilisées, mais d'autres fonctions auront l'occasion de le faire */
+ * (Ne s'occupe pas de détruire proprement les structures utilisées, mais d'autres fonctions auront l'occasion de le faire) */
 void finPartie(etat* e){
 	e -> fermeture = true;
 	return;
 }
+
 
 
 
@@ -226,8 +196,8 @@ void permute(int* t,int i,int j){
 /* Met à jour le tableau des tétrominos suivants de e avec le prochain "sac" de 7 tétrominos
  * Ne fait quelque chose que si le tableau des tétrominos suivants contient assez de place
  * Doit être appelée à l'apparition de chaque nouveau tétromino (et avant le début de la partie)
- * Ne sera pas vraiment adapté à un mode 2 joueurs (si on veut que les 2 joueurs aient la même suite de tétrominos) */
-void prochainSac(etat* e){
+ * ANCIENNE IMPLÉMENTATION (sans le tableau SUIVANTS, incompatible avec le mode 2 joueurs) */
+/*void prochainSac(etat* e){
 	// Trouve à partir de quel indice i_vide le tableau des tétrominos suivants est vide
 	int i_vide = 8;
 	for(int i = 0;i <= 7;i++){
@@ -254,7 +224,28 @@ void prochainSac(etat* e){
 	}
 	
 	return;
+}*/
+
+/* Modifie le tableau SUIVANTS pour ajouter un "sac" de 7 tétrominos à partir de l'indice n */
+void genereSac(int n){
+	// Mélange de Fisher-Yates (cf Wikipedia) pour une permutation aléatoire "efficace" :
+	int t[7];
+	for(int i = 0;i <= 6;i++){
+		t[i] = i+1;		// Car les indices des tétominos vont de 1 à 7
+	}
+	for(int i = 6;i >= 0;i--){
+		int j = rand() % (i+1);
+		permute(t,i,j);
+	}
+	// Copie du sac ainsi généré dans SUIVANTS :
+	for(int i = 0;i <= 6;i++){
+		SUIVANTS[n+i] = t[i];
+	}
+	return;
 }
+
+
+
 
 /* Fait correspondre le "niveau", et surtout la vitesse de descente automatique des tétrominos, au nombre de lignes actuel
  * Les vitesses de descente sont calqués sur la version GB du jeu, à quelques arrondis près */
@@ -352,16 +343,19 @@ void placeTetromino(etat* e){
 /* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
  * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
 void tetrominoSuivant(etat* e){
-	e -> idTetro = e -> suivants[0];
-	int i = 0;
+	//e -> idTetro = e -> suivants[0];		// ANCIEN
+	e -> idTetro = SUIVANTS[e -> idProchain];
+	e -> idProchain += 1;	// TODO : Ajouter une vérification pour quand idProchain devient très grand...
+	e -> idProchain = e ->idProchain%NB_SUIVANTS;	// Peu élégant, et demande que 7 | NB_SUIVANTS...
+	/*int i = 0;
 	while(i < 13 && e -> suivants[i] != VIDE){
 		e -> suivants[i] = e -> suivants[i+1];
 		i += 1;
-	}
+	}*/		// ANCIEN
 	placeTetromino(e);
-	e -> suivants[13] = VIDE;
+	//e -> suivants[13] = VIDE;		// ANCIEN
 	e -> reserveDispo = true;
-	prochainSac(e);
+	//prochainSac(e);		// ANCIEN
 	return;
 }
 
@@ -584,8 +578,60 @@ void grillePerdant(etat* e){
 	}
 	e -> idTetro = VIDE;
 	e -> reserve = VIDE;
-	for(int i = 0;i < 14;i++){
+	/*for(int i = 0;i < 14;i++){
 		e -> suivants[i] = VIDE;
+	}*/		// Il faudra faire sans ça...
+	return;
+}
+
+
+
+/* Initialise proprement la structure d'état */
+void initEtat(etat* e){
+	e -> idTetro = VIDE;
+	e -> idProchain = 1;
+	e -> reserve = VIDE;
+	e -> reserveDispo = true;
+	//for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;		// ANCIEN
+	e -> g = new int[HAUT*LARG];
+	e -> copieLignesAnimation = new int[4*LARG];
+	for(int i = 0;i < HAUT*LARG;i++){
+		e->g[i] = 0;
 	}
+	e -> fermeture = false;
+	e -> descenteRapide = false;
+	for(int k = 0;k < 4;k++){
+		e -> lignesPleines[k] = -1;
+	}
+	e -> attaquesRecues = 0;
+	e -> progresAnimationLignes = -1;	// L'animation de suppression des lignes n'a aucune raison d'être activée en début de partie
+	e -> lignes = 0;
+	e -> score = 0;
+	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
+	changeVitesse(e);	// Idem
+	/*// Génère les 14 premiers tétrominos :
+	prochainSac(e);
+	prochainSac(e);*/	// ANCIEN
+	tetrominoSuivant(e);
+	return;
+}
+
+/* Détruit proprement la structure d'état */
+void detruireEtat(etat* e){
+	delete[] e -> g;
+	delete[] e -> copieLignesAnimation;
+	return;
+}
+
+void initSuivants(){
+	SUIVANTS = new int[NB_SUIVANTS];
+	for(int n = 0;n < NB_SUIVANTS;n += 7){
+		genereSac(n);
+	}
+	return;
+}
+
+void detruireSuivants(){
+	delete[] SUIVANTS;
 	return;
 }

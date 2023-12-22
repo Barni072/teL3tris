@@ -21,10 +21,12 @@ void initialisation1J(etat* e){
 	srand(time(NULL));
 	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
 	if(police == NULL) cout << "ATTENTION ! Fichier de police de texte non trouvé, affichage des scores impossible..." << endl;
+	// Initialisation et remplissage du tableau SUIVANTS :
+	initSuivants();
+	// Initialisation de l'état et choix du niveau
 	initEtat(e);
-	// Récupération du niveau initial dans le fichier de configuration :
 	cfg >> e -> niveau;
-	// Si l'utilisateur a entré n'importe quoi, il jouera au niveau 0
+	// Si l'utilisateur a entré n'importe quoi, il jouera au niveau 0 :
 	if(e->niveau > 20 || e->niveau < 0) e->niveau = 0;
 	changeVitesse(e);
 	// Ici : initialisation des commandes ? (APRÈS celle de l'état !)
@@ -37,9 +39,10 @@ void initialisation2J(etat* e1,etat* e2){
 	TTF_Init();
 	fenetre = SDL_CreateWindow("teLtr3is",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,2*(LARG+5)*TLBC + 2*(MARGE+TLBC),HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	srand(time(NULL));
 	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
 	if(police == NULL) cout << "ATTENTION ! Fichier de police de texte non trouvé, affichage des scores impossible..." << endl;
-	srand(time(NULL));
+	initSuivants();
 	initEtat(e1);
 	initEtat(e2);
 	// Récupération des niveaux initiaux (pas forcément le même pour chaque joueur) dans le fichier de configuration :
@@ -51,7 +54,6 @@ void initialisation2J(etat* e1,etat* e2){
 	changeVitesse(e1);
 	changeVitesse(e2);
 	cfg.close();
-	// Ici : initialisation des commandes ? (APRÈS celle des états !)
 	return;
 }
 
@@ -61,6 +63,7 @@ void fermeture1J(etat* e){
 	SDL_DestroyRenderer(rndr);
 	TTF_CloseFont(police);
 	detruireEtat(e);
+	detruireSuivants();
 	SDL_Quit();
 	TTF_Quit();
 	return;
@@ -73,6 +76,7 @@ void fermeture2J(etat* e1,etat* e2){
 	TTF_CloseFont(police);
 	detruireEtat(e1);
 	detruireEtat(e2);
+	detruireSuivants();
 	SDL_Quit();
 	TTF_Quit();
 	return;
@@ -149,12 +153,14 @@ void jeuDeuxJoueurs(){
 }
 
 int main(){
+	// Choix du mode de jeu :
 	int joueurs = 1;
 	cfg.open("teLtr3is.cfg");
 	cfg >> joueurs;
+	// Jeu :
 	if(joueurs == 1) jeuUnJoueur();	// MODE UN JOUEUR (Cas par défaut si le fichier de configuration est absent)
 	else if(joueurs == 2)jeuDeuxJoueurs();	// MODE DEUX JOUEURS
-	// Sinon, l'utilsateur a mis n'importe quoi dans le fichier de configuration, et il ne se passe rien
+	// (Sinon, l'utilsateur a mis n'importe quoi dans le fichier de configuration, et il ne se passe rien)
 	cfg.close();
 	return 0;
 }

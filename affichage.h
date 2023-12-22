@@ -18,7 +18,7 @@ extern const int MARGE;
 //void dessineChiffre(int i,int offset_x,int offset_y);
 //void dessineNombre(int n,int nbChiffres,int offset_x,int offset_y);
 //void afficheAux(etat* e,int offset_x,bool clear);
-//void afficheAnim(etat* e,int offset_x);
+//void afficheAnim(etat* e);
 void affiche1J(etat* e);
 void affiche2J(etat* e1,etat* e2);
 

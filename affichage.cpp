@@ -155,7 +155,8 @@ void dessineSuivants(etat* e,int nb,int offset_x,int offset_y){
 		SDL_RenderDrawLine(rndr,offset_x,offset_y + 4*k*TLBC,offset_x + 4*TLBC,offset_y + 4*k*TLBC);
 	}
 	for(int k = 0;k < nb;k++){
-		dessineTetro(e->suivants[k],offset_x,offset_y + 4*k*TLBC,0,false,false);
+		//dessineTetro(e->suivants[k],offset_x,offset_y + 4*k*TLBC,0,false,false);	// ANCIENNE IMPLÉMENTATION DES TÉTROMINOS SUIVANTS
+		dessineTetro(SUIVANTS[(e->idProchain)+k],offset_x,offset_y + 4*k*TLBC,0,false,false);
 	}
 	return;
 }
@@ -261,7 +262,7 @@ void afficheAux(etat* e,int offset_x,bool clear){
 
 /* Autre fonction auxiliaire de affiche1J et affiche2J, s'occupe de l'animation de suppression des lignes,
  * et ne contient pas d'attente active (donc ne bloque pas l'autre joueur en mode 2 joueurs) */
-void afficheAnim(etat* e,int offset_x){
+void afficheAnim(etat* e){
 	if((e -> progresAnimationLignes) % (TMPS_ANIM*2) == 0){
 		// Passage en "couleur qui BRILLE" des lignes pleines
 		for(int k = 0;k < 4;k++){
@@ -294,7 +295,7 @@ void affiche1J(etat* e){
 		e -> affiche = false;
 		afficheAux(e,0,true);
 	}else if((e -> progresAnimationLignes) != -1){	// ... sauf dans le cas particulier de l'animation de suppression des lignes :
-		afficheAnim(e,0);
+		afficheAnim(e);
 	}	// Sinon, on attend
 	return;
 }
@@ -303,8 +304,8 @@ void affiche1J(etat* e){
 void affiche2J(etat* e1,etat* e2){
 	int offsetJ2 = TLBC * (LARG+6) + MARGE;
 	
-	if(e1->progresAnimationLignes != -1) afficheAnim(e1,0);
-	if(e2->progresAnimationLignes != -1) afficheAnim(e2,offsetJ2);
+	if(e1->progresAnimationLignes != -1) afficheAnim(e1);
+	if(e2->progresAnimationLignes != -1) afficheAnim(e2);
 	
 	if((e1 -> affiche) || (e2 -> affiche)){
 		SDL_SetRenderDrawColor(rndr,0,0,0,0);
