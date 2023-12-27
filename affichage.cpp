@@ -302,7 +302,7 @@ void affiche1J(etat* e){
 
 /* Version 2 joueurs de la fonction d'affichage, tient avec du scotch */
 void affiche2J(etat* e1,etat* e2){
-	int offsetJ2 = TLBC * (LARG+6) + MARGE;
+	int offsetJ2 = TLBC * (LARG+7);
 	
 	if(e1->progresAnimationLignes != -1) afficheAnim(e1);
 	if(e2->progresAnimationLignes != -1) afficheAnim(e2);

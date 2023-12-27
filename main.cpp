@@ -37,7 +37,7 @@ void initialisation1J(etat* e){
 void initialisation2J(etat* e1,etat* e2){
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	TTF_Init();
-	fenetre = SDL_CreateWindow("teLtr3is",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,2*(LARG+5)*TLBC + 2*(MARGE+TLBC),HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
+	fenetre = SDL_CreateWindow("teLtr3is",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,TLBC*(2*LARG+12) + 2*MARGE,HAUT*TLBC + 2*MARGE,SDL_WINDOW_SHOWN);
 	rndr = SDL_CreateRenderer(fenetre,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	srand(time(NULL));
 	police = TTF_OpenFont("JupiteroidRegular-Rpj6V.ttf",TLBC*2/3 - 4);	// Provenance : fontspace.com/jupiteroid-font-f90261 (domaine public)
@@ -114,21 +114,20 @@ void jeuDeuxJoueurs(){
 	initialisation2J(&e1,&e2);
 	int ticks = SDL_GetTicks();
 	while(!(e1.fermeture && e2.fermeture)){
-		// Descentes automatiques et applications de commandes :
-		// Si l'animation de suppression des lignes est en cours pour un joueur, le jeu continue pour l'autre
-		if(e1.progresAnimationLignes == -1){
+		// Descentes automatiques et applications des commandes :
+		// Si l'animation de suppression des lignes est en cours pour un joueur (ou s'il a perdu), le jeu continue pour l'autre
+		if(e1.progresAnimationLignes == -1 && !(e1.fermeture)){
 			if(e1.iDescente >= e1.delaiDescente || (e1.descenteRapide && e1.iDescente >= 25)){
 				descenteAuto(&e1);
 				e1.iDescente = 0;
 			}
 		}
-		if(e2.progresAnimationLignes == -1){
+		if(e2.progresAnimationLignes == -1 && !(e2.fermeture)){
 			if(e2.iDescente >= e2.delaiDescente || (e2.descenteRapide && e2.iDescente >= 25)){
 				descenteAuto(&e2);
 				e2.iDescente = 0;
 			}
 		}
-		
 		// Rien n'empêche de demander un déplacement pendant une animation de suppression de lignes... Ceci risque de causer des problèmes...
 		appliqueCommandes2J(&e1,&e2);
 
@@ -139,8 +138,8 @@ void jeuDeuxJoueurs(){
 		affiche2J(&e1,&e2);
 		
 		// Suppression des lignes, déclenche aussi l'envoi des attaques
-		if(e1.progresAnimationLignes) supprimeLignes2J(&e1,&e2);
-		if(e2.progresAnimationLignes) supprimeLignes2J(&e2,&e1);
+		if(e1.progresAnimationLignes == -1) supprimeLignes2J(&e1,&e2);
+		if(e2.progresAnimationLignes == -1) supprimeLignes2J(&e2,&e1);
 		
 		e1.iDescente += 1;
 		e2.iDescente += 1;

@@ -193,39 +193,6 @@ void permute(int* t,int i,int j){
 	return;
 }
 
-/* Met à jour le tableau des tétrominos suivants de e avec le prochain "sac" de 7 tétrominos
- * Ne fait quelque chose que si le tableau des tétrominos suivants contient assez de place
- * Doit être appelée à l'apparition de chaque nouveau tétromino (et avant le début de la partie)
- * ANCIENNE IMPLÉMENTATION (sans le tableau SUIVANTS, incompatible avec le mode 2 joueurs) */
-/*void prochainSac(etat* e){
-	// Trouve à partir de quel indice i_vide le tableau des tétrominos suivants est vide
-	int i_vide = 8;
-	for(int i = 0;i <= 7;i++){
-		if(e->suivants[i] == VIDE){
-			i_vide = i;
-			break;
-		}
-	}
-	// Si i_vide >= 8 (en pratique si i_vide == 8), il n'y a pas la place pour un nouveau sac
-	if(i_vide < 8){
-		// Mélange de Fisher-Yates (cf Wikipedia) pour une permutation aléatoire "effcicace" :
-		int t[7];
-		for(int i = 0;i <= 6;i++){
-			t[i] = i+1;		// Car les indices des tétominos vont de 1 à 7
-		}
-		for(int i = 6;i >= 0;i--){
-			int j = rand() % (i+1);
-			permute(t,i,j);
-		}
-		// Rajoute les nouveaux indices dans l'état e :
-		for(int i = 0;i <= 6;i++){
-			e->suivants[i_vide+i] = t[i];		// Les éléments d'indice < i_vide sont déjà peuplés
-		}
-	}
-	
-	return;
-}*/
-
 /* Modifie le tableau SUIVANTS pour ajouter un "sac" de 7 tétrominos à partir de l'indice n */
 void genereSac(int n){
 	// Mélange de Fisher-Yates (cf Wikipedia) pour une permutation aléatoire "efficace" :
@@ -343,19 +310,11 @@ void placeTetromino(etat* e){
 /* Prend le premier tétromino suivant, et le met en haut de la grille, "prêt à tomber"
  * Les autres "tétrominos suivants" sont ensuite avancés d'une case dans le tableau des suivants */
 void tetrominoSuivant(etat* e){
-	//e -> idTetro = e -> suivants[0];		// ANCIEN
 	e -> idTetro = SUIVANTS[e -> idProchain];
 	e -> idProchain += 1;	// TODO : Ajouter une vérification pour quand idProchain devient très grand...
 	e -> idProchain = e ->idProchain%NB_SUIVANTS;	// Peu élégant, et demande que 7 | NB_SUIVANTS...
-	/*int i = 0;
-	while(i < 13 && e -> suivants[i] != VIDE){
-		e -> suivants[i] = e -> suivants[i+1];
-		i += 1;
-	}*/		// ANCIEN
 	placeTetromino(e);
-	//e -> suivants[13] = VIDE;		// ANCIEN
 	e -> reserveDispo = true;
-	//prochainSac(e);		// ANCIEN
 	return;
 }
 
@@ -445,7 +404,8 @@ void supprimeLignes1J(etat* e){
 }
 
 /* Même fonction que la supprimeLignes1J, mais adaptée au mode 2 joueurs :
- * Effectue la suppression des lignes pour le joueur e (exactement comme en mode 1 joueur), et déclenche l'envoi d'attaques au joueur adv */
+ * Effectue la suppression des lignes pour le joueur e (exactement comme en mode 1 joueur),
+ * puis déclenche l'envoi d'attaques au joueur adv */
 void supprimeLignes2J(etat* e,etat* adv){
 	int nbLignes = 0;
 	for(int k = 0;k < 4;k++){
@@ -490,33 +450,34 @@ void supprimeLignes2J(etat* e,etat* adv){
 		e->niveau += 1;
 		changeVitesse(e);
 	}
-	//e->progresAnimationLignes = -1;	//TEST
 	return;
 }
 
 /* Rajoute en bas de la grille de jeu le nombre de lignes d'attaques contenu dans e->attaquesRecues
  * (En mode 1 joueur, e->attaquesRecues vaut 0 et ceci n'a aucun effet)
- * S'il n'y a pas la place, le joueur a perdu (mais n'aura pas le temps de voir/comprendre pourquoi...)
- * (En pratique, cette fonction fait n'importe quoi) */
+ * S'il n'y a pas la place, le joueur a perdu (mais n'aura pas le temps de voir/comprendre pourquoi...) */
 void recoitAttaques(etat* e){
 	// Décide de l'emplacement du "trou" dans les lignes d'attaque :
 	int trou = rand()%LARG;
-	//cout << e -> attaquesRecues << endl << trou << endl << endl;	// DEBUG
-	// Monte les blocs déjà présents :
-	for(int i = 0;i < LARG;i++){
-		for(int j = HAUT-1;j >= 0;j--){
-			if(!(blocG(e,i,j) != VIDE && j-(e->attaquesRecues) < 0)){	// Sinon, un bloc non vide serait translaté en dehors de la grille, et on ne peut pas faire ça (le joueur a donc perdu)
-				ecritBlocG(e,i,j-(e->attaquesRecues),blocG(e,i,j));
+	// Translate vers le haut les blocs déjà présents :
+	for(int j = 0;j < HAUT;j++){
+		for(int i = 0;i < LARG;i++){
+			if(j < (e->attaquesRecues)){
+				if(blocG(e,i,j) != VIDE){
+					e -> fermeture = true;	// Il faudrait translater un bloc non vide en dehors de la grille de jeu, le joueur a donc perdu
+				}	// Sinon, on n'effectue pas la translation, car on sortirait du tableau !
 			}else{
-				e -> fermeture = true;
+				ecritBlocG(e,i,j-(e->attaquesRecues),blocG(e,i,j));		// Cas général, rien à signaler
 			}
 		}
 	}
 	// Rajoute les nouvelles lignes en bas de la grille :
 	for(int i = 0;i < LARG;i++){
-		if(i != trou){
-			for(int k = 1;k <= e->attaquesRecues;k++){
+		for(int k = 1;k <= e->attaquesRecues;k++){
+			if(i != trou){
 				ecritBlocG(e,i,HAUT-k,GRIS);
+			}else{ 
+				ecritBlocG(e,i,HAUT-k,VIDE);
 			}
 		}
 	}
@@ -551,7 +512,7 @@ void fixeTetromino(etat* e){
 		}
 	}
 	detecteLignes(e);
-	//if(e->attaquesRecues != 0) recoitAttaques(e);		// OULÀLÀ
+	if(e->attaquesRecues != 0) recoitAttaques(e);
 	tetrominoSuivant(e);
 	return;
 }
@@ -592,7 +553,6 @@ void initEtat(etat* e){
 	e -> idProchain = 1;
 	e -> reserve = VIDE;
 	e -> reserveDispo = true;
-	//for(int i = 0;i < 14;i++) e->suivants[i] = VIDE;		// ANCIEN
 	e -> g = new int[HAUT*LARG];
 	e -> copieLignesAnimation = new int[4*LARG];
 	for(int i = 0;i < HAUT*LARG;i++){
@@ -609,16 +569,13 @@ void initEtat(etat* e){
 	e -> score = 0;
 	e -> niveau = 0;	// On garde ça au cas où, mais en théorie le niveau devrait être récupéré dans le fichier de configuration
 	changeVitesse(e);	// Idem
-	/*// Génère les 14 premiers tétrominos :
-	prochainSac(e);
-	prochainSac(e);*/	// ANCIEN
 	tetrominoSuivant(e);
 	return;
 }
 
 /* Détruit proprement la structure d'état */
 void detruireEtat(etat* e){
-	delete[] e -> g;
+	delete[] e -> g;		// Semble échouer pour un joueur ayant reçu des lignes d'attaque...
 	delete[] e -> copieLignesAnimation;
 	return;
 }
